@@ -1,1 +1,1 @@
-# json-structure-editor
+# JSON Structure Editor
