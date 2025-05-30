@@ -12,13 +12,21 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import EditIcon from "@mui/icons-material/Edit";
 import {
   StructuredData,
-  Filters,
   Marketplace,
   Group,
   ExpandedGroup,
+  ExpandedWidget,
 } from "./types";
 import AddLinkIcon from "@mui/icons-material/AddLink";
-import { getMarketplaceGroups } from "./utils";
+
+interface JsonTreeViewProps {
+  data: StructuredData;
+  onSelectNode: (node: any, path: string) => void;
+  onAttachGroups: (marketplace: Marketplace) => void;
+  onAttachWidgets: (group: Group) => void;
+  getMarketplaceGroups: (mp: Marketplace) => ExpandedGroup[];
+  getGroupWidgets: (group: Group) => ExpandedWidget[];
+}
 
 interface RowComponentProps {
   isExpanded: boolean;
@@ -28,38 +36,17 @@ interface RowComponentProps {
   onSelectNode: (node: any, path: string) => void;
   onAttachGroups: (marketplace: Marketplace) => void;
   onAttachWidgets: (group: Group) => void;
-}
-
-interface JsonTreeViewProps {
-  data: StructuredData;
-  onSelectNode: (node: any, path: string) => void;
-  filters: Filters;
-  searchTerm: string;
-  onAttachGroups: (marketplace: Marketplace) => void;
-  onAttachWidgets: (group: Group) => void;
-}
-
-interface MarketplaceGroupsProps {
-  marketplace: Marketplace;
-  mpIndex: number;
-  onSelectNode: (node: any, path: string) => void;
-  onAttachWidgets: (group: Group) => void;
-}
-
-interface GroupWidgetsProps {
-  widgets?: Array<{ widget?: string; [key: string]: any }>;
-  mpIndex: number;
-  groupIndex: number;
-  onSelectNode: (node: any, path: string) => void;
+  getMarketplaceGroups: (mp: Marketplace) => ExpandedGroup[];
+  getGroupWidgets: (group: Group) => ExpandedWidget[];
 }
 
 const JsonTreeView: React.FC<JsonTreeViewProps> = ({
   data,
   onSelectNode,
-  filters,
-  searchTerm,
   onAttachGroups,
   onAttachWidgets,
+  getMarketplaceGroups,
+  getGroupWidgets
 }) => {
   const [expandedMarketplaces, setExpandedMarketplaces] = useState<
     Record<number, boolean>
@@ -87,10 +74,11 @@ const JsonTreeView: React.FC<JsonTreeViewProps> = ({
               isExpanded={expandedMarketplaces[index]}
               handleToggleMarketplace={handleToggleMarketplace}
               mp={mp}
-              data={data}
               onSelectNode={onSelectNode}
               onAttachGroups={onAttachGroups}
               onAttachWidgets={onAttachWidgets}
+              getMarketplaceGroups={getMarketplaceGroups}
+              getGroupWidgets={getGroupWidgets}
             />
           ))}
         </Box>
@@ -113,8 +101,11 @@ interface RowComponentProps {
   handleToggleMarketplace: (index: number) => void;
   index: number;
   mp: Marketplace;
-  data: StructuredData;
   onSelectNode: (node: any, path: string) => void;
+  onAttachGroups: (marketplace: Marketplace) => void;
+  onAttachWidgets: (group: Group) => void;
+  getMarketplaceGroups: (mp: Marketplace) => ExpandedGroup[];
+  getGroupWidgets: (group: Group) => ExpandedWidget[];
 }
 
 const RowComponent: React.FC<RowComponentProps> = React.memo(
@@ -123,13 +114,14 @@ const RowComponent: React.FC<RowComponentProps> = React.memo(
     handleToggleMarketplace,
     index,
     mp,
-    data,
     onSelectNode,
-    onAttachWidgets,
     onAttachGroups,
+    onAttachWidgets,
+    getMarketplaceGroups,
+    getGroupWidgets
   }) => {
     // Получаем расширенные группы для маркетплейса
-    const marketplaceGroups = getMarketplaceGroups(data, mp);
+    const marketplaceGroups = getMarketplaceGroups(mp);
 
     return (
       <Paper elevation={2} sx={{ mb: 1 }}>
@@ -151,7 +143,7 @@ const RowComponent: React.FC<RowComponentProps> = React.memo(
               <IconButton
                 onClick={(e) => {
                   e.stopPropagation();
-                  onSelectNode(mp, `data.marketplaces[${index}]`);
+                  onSelectNode(mp, `marketplaces[${index}]`);
                 }}
                 size="small"
               >
@@ -175,10 +167,9 @@ const RowComponent: React.FC<RowComponentProps> = React.memo(
             <MarketplaceGroups
               marketplaceGroups={marketplaceGroups}
               mpIndex={index}
-              data={data}
               onSelectNode={onSelectNode}
               onAttachWidgets={onAttachWidgets}
-              marketplace={mp}
+              getGroupWidgets={getGroupWidgets}
             />
           </AccordionDetails>
         </Accordion>
@@ -190,12 +181,13 @@ const RowComponent: React.FC<RowComponentProps> = React.memo(
 interface MarketplaceGroupsProps {
   marketplaceGroups: ExpandedGroup[];
   mpIndex: number;
-  data: StructuredData;
   onSelectNode: (node: any, path: string) => void;
+  onAttachWidgets: (group: Group) => void;
+  getGroupWidgets: (group: Group) => ExpandedWidget[];
 }
 
 const MarketplaceGroups: React.FC<MarketplaceGroupsProps> = React.memo(
-  ({ marketplaceGroups, mpIndex, data, onSelectNode, onAttachWidgets }) => {
+  ({ marketplaceGroups, mpIndex, onSelectNode, onAttachWidgets, getGroupWidgets }) => {
     const [expandedGroups, setExpandedGroups] = useState<
       Record<number, boolean>
     >({});
@@ -252,7 +244,7 @@ const MarketplaceGroups: React.FC<MarketplaceGroupsProps> = React.memo(
                       e.stopPropagation();
                       onSelectNode(
                         group,
-                        `data.marketplaces[${mpIndex}].marketplaceGroups[${groupIndex}]`
+                        `groups[${groupIndex}]`
                       );
                     }}
                     size="small"
@@ -279,10 +271,9 @@ const MarketplaceGroups: React.FC<MarketplaceGroupsProps> = React.memo(
                   Виджеты в группе
                 </Typography>
                 <GroupWidgets
-                  widgets={group.groupWidgets}
-                  mpIndex={mpIndex}
-                  groupIndex={groupIndex}
+                  group={group as unknown as Group}
                   onSelectNode={onSelectNode}
+                  getGroupWidgets={getGroupWidgets}
                 />
               </AccordionDetails>
             </Accordion>
@@ -293,8 +284,16 @@ const MarketplaceGroups: React.FC<MarketplaceGroupsProps> = React.memo(
   }
 );
 
+interface GroupWidgetsProps {
+  group: Group;
+  onSelectNode: (node: any, path: string) => void;
+  getGroupWidgets: (group: Group) => ExpandedWidget[];
+}
+
 const GroupWidgets: React.FC<GroupWidgetsProps> = React.memo(
-  ({ widgets, mpIndex, groupIndex, onSelectNode }) => {
+  ({ group, onSelectNode, getGroupWidgets }) => {
+    const widgets = getGroupWidgets(group);
+
     if (!widgets || widgets.length === 0) {
       return (
         <Paper
@@ -327,7 +326,7 @@ const GroupWidgets: React.FC<GroupWidgetsProps> = React.memo(
             onClick={() =>
               onSelectNode(
                 widget,
-                `data.marketplaces[${mpIndex}].marketplaceGroups[${groupIndex}].groupWidgets[${widgetIndex}]`
+                `widgets[${widgetIndex}]`
               )
             }
           >

@@ -18,6 +18,8 @@ import FilterPanel from "./FilterPanel";
 import {
   AttachmentDialogState,
   EntityCreationData,
+  ExpandedGroup,
+  ExpandedWidget,
   FilterOption,
   Filters,
   Group,
@@ -357,39 +359,134 @@ const App = () => {
     setNodePath(path);
   }, []);
 
-  const handleUpdateNode = useCallback(
-    (updatedNode: any) => {
-      if (!structuredData) return;
-
-      try {
-        const pathParts = nodePath.split(".");
-        let currentPointer: any = { data: structuredData }; // Обертка для корневого уровня
-
-        for (let i = 0; i < pathParts.length - 1; i++) {
-          const part = pathParts[i];
-          if (part.includes("[")) {
-            const [arrayName, index] = part.split(/[\]]/).filter(Boolean);
-            currentPointer = currentPointer[arrayName][parseInt(index)];
-          } else {
-            currentPointer = currentPointer[part];
-          }
-        }
-
-        const lastPart = pathParts[pathParts.length - 1];
-        if (lastPart.includes("[")) {
-          const [arrayName, index] = lastPart.split(/[\]]/).filter(Boolean);
-          currentPointer[arrayName][parseInt(index)] = updatedNode;
+  const handleUpdateNode = useCallback((updatedNode: any) => {
+    if (!structuredData) return;
+    
+    try {
+      const pathParts = nodePath.split('.');
+      let currentPointer: any = structuredData;
+      let parent = null;
+      let lastKey = null;
+      
+      // Находим узел, который нужно обновить
+      for (let i = 0; i < pathParts.length; i++) {
+        const part = pathParts[i];
+        
+        if (part.includes('[')) {
+          const match = part.match(/(\w+)\[(\d+)\]/);
+          if (!match) continue;
+          
+          const arrayName = match[1];
+          const index = parseInt(match[2]);
+          parent = currentPointer;
+          lastKey = arrayName;
+          currentPointer = currentPointer[arrayName][index];
         } else {
-          currentPointer[lastPart] = updatedNode;
+          parent = currentPointer;
+          lastKey = part;
+          currentPointer = currentPointer[part];
         }
-
-        setStructuredData({ ...structuredData });
-        showSnackbar("Узел успешно обновлён", "success");
-      } catch (error) {
-        showSnackbar("Ошибка при обновлении узла", "error");
       }
+      
+      // Сохраняем старый code перед обновлением
+      const oldCode = currentPointer?.code;
+      const newCode = updatedNode?.code;
+      
+      // Обновляем узел
+      if (parent && lastKey !== null) {
+        if (Array.isArray(parent[lastKey])) {
+          const index = parseInt(pathParts[pathParts.length - 1].match(/\[(\d+)\]/)?.[1] || '0');
+          parent[lastKey][index] = updatedNode;
+        } else {
+          parent[lastKey] = updatedNode;
+        }
+      }
+      
+      // Если изменился code, обновляем все ссылки
+      if (oldCode && newCode && oldCode !== newCode) {
+        const newData = { ...structuredData };
+        
+        // Обновляем ссылки в маркетплейсах
+        newData.marketplaces = newData.marketplaces.map(mp => {
+          if (!mp.marketplaceGroups) return mp;
+          
+          return {
+            ...mp,
+            marketplaceGroups: mp.marketplaceGroups.map(mg => {
+              if (mg.group === oldCode) {
+                return { ...mg, group: newCode };
+              }
+              return mg;
+            })
+          };
+        });
+        
+        // Обновляем ссылки в группах
+        newData.groups = newData.groups.map(group => {
+          if (!group.groupWidgets) return group;
+          
+          return {
+            ...group,
+            groupWidgets: group.groupWidgets.map(gw => {
+              if (gw.widget === oldCode) {
+                return { ...gw, widget: newCode };
+              }
+              return gw;
+            })
+          };
+        });
+        
+        setStructuredData(newData);
+      } else {
+        setStructuredData({ ...structuredData });
+      }
+      
+      showSnackbar('Узел успешно обновлён', 'success');
+    } catch (error) {
+      console.error('Ошибка при обновлении узла:', error);
+      showSnackbar('Ошибка при обновлении узла', 'error');
+    }
+  }, [nodePath, structuredData]);
+
+  const getMarketplaceGroups = useCallback(
+    (mp: Marketplace): ExpandedGroup[] => {
+      if (!structuredData || !mp.marketplaceGroups) return [];
+
+      return mp.marketplaceGroups
+        .map((mg) => {
+          const group = structuredData.groups.find((g) => g.code === mg.group);
+          if (!group) return null;
+
+          return {
+            ...group,
+            displayOrder: mg.displayOrder,
+          };
+        })
+        .filter(Boolean) as unknown as ExpandedGroup[];
     },
-    [nodePath, structuredData]
+    [structuredData]
+  );
+
+  // Функция для получения виджетов группы
+  const getGroupWidgets = useCallback(
+    (group: Group): ExpandedWidget[] => {
+      if (!structuredData || !group.groupWidgets) return [];
+
+      return group.groupWidgets
+        .map((gw) => {
+          const widget = structuredData.widgets.find(
+            (w) => w.code === gw.widget
+          );
+          if (!widget) return null;
+
+          return {
+            ...widget,
+            displayOrder: gw.displayOrder,
+          };
+        })
+        .filter(Boolean) as ExpandedWidget[];
+    },
+    [structuredData]
   );
 
   const handleDownload = () => {
@@ -557,7 +654,12 @@ const App = () => {
         />
       )}
       <Box sx={{ marginBottom: 3 }}>
-        <Typography variant="h4" component="h1" gutterBottom style={{ fontFamily: 'IBM Plex Mono', fontWeight: 500 }}>
+        <Typography
+          variant="h4"
+          component="h1"
+          gutterBottom
+          style={{ fontFamily: "IBM Plex Mono", fontWeight: 500 }}
+        >
           JSON STRUCTURE EDITOR
         </Typography>
 
@@ -569,7 +671,11 @@ const App = () => {
           id="upload-json"
         />
         <label htmlFor="upload-json">
-          <Button variant="contained" component="span" style={{ fontFamily: 'IBM Plex Mono', fontWeight: 500 }}>
+          <Button
+            variant="contained"
+            component="span"
+            style={{ fontFamily: "IBM Plex Mono", fontWeight: 500 }}
+          >
             Загрузить JSON
           </Button>
         </label>
@@ -579,7 +685,11 @@ const App = () => {
             variant="contained"
             color="primary"
             onClick={handleDownload}
-            style={{ marginLeft: 10, fontFamily: 'IBM Plex Mono', fontWeight: 500 }}
+            style={{
+              marginLeft: 10,
+              fontFamily: "IBM Plex Mono",
+              fontWeight: 500,
+            }}
           >
             Выгрузить JSON
           </Button>
@@ -588,7 +698,10 @@ const App = () => {
 
       {!structuredData && !loading && (
         <Paper elevation={3} style={{ padding: 20, textAlign: "center" }}>
-          <Typography variant="h6" style={{ fontFamily: 'IBM Plex Mono', fontWeight: 500 }}>
+          <Typography
+            variant="h6"
+            style={{ fontFamily: "IBM Plex Mono", fontWeight: 500 }}
+          >
             Загрузите JSON файл для начала работы
           </Typography>
         </Paper>
@@ -601,21 +714,21 @@ const App = () => {
             onClick={() =>
               setCreationDialog({ open: true, type: "marketplace" })
             }
-            style={{ fontFamily: 'IBM Plex Mono', fontWeight: 500 }}
+            style={{ fontFamily: "IBM Plex Mono", fontWeight: 500 }}
           >
             + Маркетплейс
           </Button>
           <Button
             variant="outlined"
             onClick={() => setCreationDialog({ open: true, type: "group" })}
-            style={{ fontFamily: 'IBM Plex Mono', fontWeight: 500 }}
+            style={{ fontFamily: "IBM Plex Mono", fontWeight: 500 }}
           >
             + Группа
           </Button>
           <Button
             variant="outlined"
             onClick={() => setCreationDialog({ open: true, type: "widget" })}
-            style={{ fontFamily: 'IBM Plex Mono', fontWeight: 500 }}
+            style={{ fontFamily: "IBM Plex Mono", fontWeight: 500 }}
           >
             + Виджет
           </Button>
@@ -639,16 +752,17 @@ const App = () => {
               <JsonTreeView
                 data={filteredData}
                 onSelectNode={handleSelectNode}
-                filters={filters}
-                searchTerm={searchTerm}
                 onAttachGroups={openAttachmentDialog.bind(null, "marketplace")}
                 onAttachWidgets={openAttachmentDialog.bind(null, "group")}
+                getMarketplaceGroups={getMarketplaceGroups}
+                getGroupWidgets={getGroupWidgets}
               />
             </Paper>
           </Grid>
           <Grid size={{ xs: 6 }}>
             <Paper elevation={3} style={{ height: "80vh" }}>
               <JsonEditor
+                structuredData={structuredData}
                 node={selectedNode}
                 path={nodePath}
                 onUpdate={handleUpdateNode}
