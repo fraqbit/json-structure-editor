@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { 
+import React, { useState, useEffect } from "react";
+import {
   TextField,
   Button,
   Typography,
   Paper,
   Box,
-  Divider
-} from '@mui/material';
+  Divider,
+} from "@mui/material";
 
 interface JsonEditorProps {
   node: any;
@@ -15,7 +15,7 @@ interface JsonEditorProps {
 }
 
 const JsonEditor: React.FC<JsonEditorProps> = ({ node, path, onUpdate }) => {
-  const [content, setContent] = useState<string>('');
+  const [content, setContent] = useState<string>("");
   const [isValidJson, setIsValidJson] = useState<boolean>(true);
 
   useEffect(() => {
@@ -24,19 +24,21 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ node, path, onUpdate }) => {
         setContent(JSON.stringify(node, null, 2));
         setIsValidJson(true);
       } catch (error) {
-        setContent('{}');
+        setContent("{}");
         setIsValidJson(false);
       }
     } else {
-      setContent('');
+      setContent("");
       setIsValidJson(true);
     }
   }, [node]);
 
-  const handleContentChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleContentChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const newContent = e.target.value;
     setContent(newContent);
-    
+
     try {
       JSON.parse(newContent);
       setIsValidJson(true);
@@ -50,24 +52,24 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ node, path, onUpdate }) => {
       const parsed = JSON.parse(content);
       onUpdate(parsed);
     } catch (error) {
-      console.error('Invalid JSON:', error);
+      console.error("Invalid JSON:", error);
     }
   };
 
   return (
-    <Paper sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Paper sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
       <Box sx={{ p: 2 }}>
         <Typography variant="h6" gutterBottom>
           JSON Editor
         </Typography>
         <Divider sx={{ mb: 2 }} />
-        
+
         {node ? (
           <>
             <Typography variant="subtitle1" gutterBottom>
               <strong>Path:</strong> {path}
             </Typography>
-            
+
             <TextField
               multiline
               fullWidth
@@ -76,18 +78,18 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ node, path, onUpdate }) => {
               value={content}
               onChange={handleContentChange}
               variant="outlined"
-              sx={{ 
-                fontFamily: 'monospace',
+              sx={{
+                fontFamily: "monospace",
                 mb: 2,
-                '& textarea': {
-                  fontFamily: 'monospace',
-                  fontSize: '0.875rem'
-                }
+                "& textarea": {
+                  fontFamily: "monospace",
+                  fontSize: "0.875rem",
+                },
               }}
               error={!isValidJson}
-              helperText={!isValidJson ? 'Invalid JSON format' : ''}
+              helperText={!isValidJson ? "Invalid JSON format" : ""}
             />
-            
+
             <Button
               variant="contained"
               color="primary"
@@ -99,12 +101,14 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ node, path, onUpdate }) => {
             </Button>
           </>
         ) : (
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            height: '100%'
-          }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "100%",
+            }}
+          >
             <Typography variant="body1" color="text.secondary">
               Select a node to edit
             </Typography>

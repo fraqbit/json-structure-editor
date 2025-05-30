@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { 
-  Box, 
+import React, { useState } from "react";
+import {
+  Box,
   Typography,
   TextField,
   Chip,
@@ -9,11 +9,11 @@ import {
   Divider,
   Autocomplete,
   Checkbox,
-  FormControlLabel
-} from '@mui/material';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import SearchIcon from '@mui/icons-material/Search';
-import { FilterOption, Filters } from './types';
+  FormControlLabel,
+} from "@mui/material";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import SearchIcon from "@mui/icons-material/Search";
+import { FilterOption, Filters } from "./types";
 
 interface FilterPanelProps {
   availableFilters: FilterOption[];
@@ -23,12 +23,12 @@ interface FilterPanelProps {
   onSearchChange: (term: string) => void;
 }
 
-const FilterPanel: React.FC<FilterPanelProps> = ({ 
-  availableFilters, 
-  filters, 
+const FilterPanel: React.FC<FilterPanelProps> = ({
+  availableFilters,
+  filters,
   onFilterChange,
   searchTerm,
-  onSearchChange 
+  onSearchChange,
 }) => {
   const [activeFilter, setActiveFilter] = useState<FilterOption | null>(null);
 
@@ -38,13 +38,13 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 
   const handleValueToggle = (value: string) => {
     if (!activeFilter) return;
-    
+
     const filterKey = `${activeFilter.type}_${activeFilter.field}`;
     const currentValues = filters[filterKey] || [];
     const newValues = currentValues.includes(value)
-      ? currentValues.filter(v => v !== value)
+      ? currentValues.filter((v) => v !== value)
       : [...currentValues, value];
-    
+
     onFilterChange(filterKey, newValues);
   };
 
@@ -58,8 +58,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   return (
     <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
       {/* Поисковая строка */}
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, width: '100%' }}>
-        <SearchIcon sx={{ mr: 1, color: 'action.active' }} />
+      <Box sx={{ display: "flex", alignItems: "center", mb: 2, width: "100%" }}>
+        <SearchIcon sx={{ mr: 1, color: "action.active" }} />
         <TextField
           fullWidth
           variant="outlined"
@@ -73,17 +73,17 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
       <Divider sx={{ my: 2 }} />
 
       {/* Активные фильтры */}
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        <FilterListIcon sx={{ mr: 1, color: 'action.active' }} />
+      <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+        <FilterListIcon sx={{ mr: 1, color: "action.active" }} />
         <Typography variant="subtitle2">Фильтры:</Typography>
-        <Box sx={{ ml: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+        <Box sx={{ ml: 1, display: "flex", flexWrap: "wrap", gap: 1 }}>
           {Object.entries(filters).map(([key, values]) => {
             if (values.length === 0) return null;
-            const [ , field] = key.split('_');
+            const [, field] = key.split("_");
             return (
               <Chip
                 key={key}
-                label={`${field}: ${values.join(', ')}`}
+                label={`${field}: ${values.join(", ")}`}
                 onDelete={() => onFilterChange(key, [])}
               />
             );
@@ -92,7 +92,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
       </Box>
 
       {/* Настройка фильтра */}
-      <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+      <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start" }}>
         <Autocomplete
           options={availableFilters}
           getOptionLabel={(option) => `${option.type}.${option.field}`}
@@ -111,21 +111,24 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
               <Typography variant="body2" sx={{ mb: 1 }}>
                 Значения для {activeFilter.field}:
               </Typography>
-              <Box sx={{ 
-                display: 'flex', 
-                flexWrap: 'wrap', 
-                gap: 1,
-                maxHeight: 120,
-                overflowY: 'auto',
-                p: 1,
-                border: '1px solid',
-                borderColor: 'divider',
-                borderRadius: 1
-              }}>
-                {activeFilter.values.map(value => {
+              <Box
+                sx={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 1,
+                  maxHeight: 120,
+                  overflowY: "auto",
+                  p: 1,
+                  border: "1px solid",
+                  borderColor: "divider",
+                  borderRadius: 1,
+                }}
+              >
+                {activeFilter.values.map((value) => {
                   const filterKey = `${activeFilter.type}_${activeFilter.field}`;
-                  const isSelected = filters[filterKey]?.includes(value) || false;
-                  
+                  const isSelected =
+                    filters[filterKey]?.includes(value) || false;
+
                   return (
                     <FormControlLabel
                       key={value}
@@ -143,17 +146,11 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                 })}
               </Box>
             </Box>
-            <Box sx={{ display: 'flex', gap: 1, alignSelf: 'flex-end' }}>
-              <Button 
-                variant="outlined" 
-                onClick={resetFilter}
-              >
+            <Box sx={{ display: "flex", gap: 1, alignSelf: "flex-end" }}>
+              <Button variant="outlined" onClick={resetFilter}>
                 Сбросить
               </Button>
-              <Button 
-                variant="contained" 
-                onClick={() => setActiveFilter(null)}
-              >
+              <Button variant="contained" onClick={() => setActiveFilter(null)}>
                 Готово
               </Button>
             </Box>
