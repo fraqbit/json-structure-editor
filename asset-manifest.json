@@ -1,15 +1,16 @@
 {
   "files": {
-    "main.css": "/json-structure-editor/static/css/main.78951375.css",
-    "main.js": "/json-structure-editor/static/js/main.90ffb128.js",
+    "main.css": "/json-structure-editor/static/css/main.814f469b.css",
+    "main.js": "/json-structure-editor/static/js/main.601e1473.js",
     "static/js/453.dccdb56f.chunk.js": "/json-structure-editor/static/js/453.dccdb56f.chunk.js",
+    "static/media/IBMPlexMono-SemiBold.ttf": "/json-structure-editor/static/media/IBMPlexMono-SemiBold.5f82c3b8863d23615092.ttf",
     "index.html": "/json-structure-editor/index.html",
-    "main.78951375.css.map": "/json-structure-editor/static/css/main.78951375.css.map",
-    "main.90ffb128.js.map": "/json-structure-editor/static/js/main.90ffb128.js.map",
+    "main.814f469b.css.map": "/json-structure-editor/static/css/main.814f469b.css.map",
+    "main.601e1473.js.map": "/json-structure-editor/static/js/main.601e1473.js.map",
     "453.dccdb56f.chunk.js.map": "/json-structure-editor/static/js/453.dccdb56f.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.78951375.css",
-    "static/js/main.90ffb128.js"
+    "static/css/main.814f469b.css",
+    "static/js/main.601e1473.js"
   ]
 }
