@@ -67,6 +67,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           placeholder="Поиск по code..."
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
+          style={{ fontFamily: 'IBM Plex Mono', fontWeight: 500 }}
         />
       </Box>
 
@@ -75,7 +76,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
       {/* Активные фильтры */}
       <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
         <FilterListIcon sx={{ mr: 1, color: "action.active" }} />
-        <Typography variant="subtitle2">Фильтры:</Typography>
+        <Typography variant="subtitle2" style={{ fontFamily: 'IBM Plex Mono', fontWeight: 500 }}>Фильтры:</Typography>
         <Box sx={{ ml: 1, display: "flex", flexWrap: "wrap", gap: 1 }}>
           {Object.entries(filters).map(([key, values]) => {
             if (values.length === 0) return null;
@@ -85,6 +86,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                 key={key}
                 label={`${field}: ${values.join(", ")}`}
                 onDelete={() => onFilterChange(key, [])}
+                style={{ fontFamily: 'IBM Plex Mono', fontWeight: 500 }}
               />
             );
           })}

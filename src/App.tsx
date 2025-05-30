@@ -557,8 +557,8 @@ const App = () => {
         />
       )}
       <Box sx={{ marginBottom: 3 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          JSON Structure Editor
+        <Typography variant="h4" component="h1" gutterBottom style={{ fontFamily: 'IBM Plex Mono', fontWeight: 500 }}>
+          JSON STRUCTURE EDITOR
         </Typography>
 
         <input
@@ -569,7 +569,7 @@ const App = () => {
           id="upload-json"
         />
         <label htmlFor="upload-json">
-          <Button variant="contained" component="span">
+          <Button variant="contained" component="span" style={{ fontFamily: 'IBM Plex Mono', fontWeight: 500 }}>
             Загрузить JSON
           </Button>
         </label>
@@ -579,7 +579,7 @@ const App = () => {
             variant="contained"
             color="primary"
             onClick={handleDownload}
-            style={{ marginLeft: 10 }}
+            style={{ marginLeft: 10, fontFamily: 'IBM Plex Mono', fontWeight: 500 }}
           >
             Выгрузить JSON
           </Button>
@@ -588,7 +588,7 @@ const App = () => {
 
       {!structuredData && !loading && (
         <Paper elevation={3} style={{ padding: 20, textAlign: "center" }}>
-          <Typography variant="h6">
+          <Typography variant="h6" style={{ fontFamily: 'IBM Plex Mono', fontWeight: 500 }}>
             Загрузите JSON файл для начала работы
           </Typography>
         </Paper>
@@ -601,18 +601,21 @@ const App = () => {
             onClick={() =>
               setCreationDialog({ open: true, type: "marketplace" })
             }
+            style={{ fontFamily: 'IBM Plex Mono', fontWeight: 500 }}
           >
             + Маркетплейс
           </Button>
           <Button
             variant="outlined"
             onClick={() => setCreationDialog({ open: true, type: "group" })}
+            style={{ fontFamily: 'IBM Plex Mono', fontWeight: 500 }}
           >
             + Группа
           </Button>
           <Button
             variant="outlined"
             onClick={() => setCreationDialog({ open: true, type: "widget" })}
+            style={{ fontFamily: 'IBM Plex Mono', fontWeight: 500 }}
           >
             + Виджет
           </Button>
