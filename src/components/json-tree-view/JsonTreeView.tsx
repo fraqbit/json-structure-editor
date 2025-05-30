@@ -16,7 +16,7 @@ import {
   Group,
   ExpandedGroup,
   ExpandedWidget,
-} from "./types";
+} from "../types";
 import AddLinkIcon from "@mui/icons-material/AddLink";
 
 interface JsonTreeViewProps {

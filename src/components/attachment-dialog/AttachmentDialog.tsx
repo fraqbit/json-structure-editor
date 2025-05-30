@@ -11,7 +11,7 @@ import {
   ListItemText,
   TextField,
 } from "@mui/material";
-import { Group, StructuredData, Widget } from "./types";
+import { Group, StructuredData, Widget } from "../types";
 
 interface AttachmentDialogProps {
   open: boolean;

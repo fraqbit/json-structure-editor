@@ -7,8 +7,8 @@ import {
   Box,
   Divider,
 } from "@mui/material";
-import { findReferences } from "./utils";
-import { StructuredData } from "./types";
+import { findReferences } from "../utils";
+import { StructuredData } from "../types";
 
 interface JsonEditorProps {
   structuredData: StructuredData

@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import SearchIcon from "@mui/icons-material/Search";
-import { FilterOption, Filters } from "./types";
+import { FilterOption, Filters } from "../types";
 
 interface FilterPanelProps {
   availableFilters: FilterOption[];

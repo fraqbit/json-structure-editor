@@ -11,7 +11,7 @@ import {
   Autocomplete,
   Chip,
 } from "@mui/material";
-import { StructuredData, EntityCreationData } from "./types";
+import { StructuredData, EntityCreationData } from "../types";
 
 interface CreationDialogProps {
   open: boolean;

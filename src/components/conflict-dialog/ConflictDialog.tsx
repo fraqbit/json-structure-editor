@@ -14,7 +14,7 @@ import {
   Divider,
   Alert,
 } from "@mui/material";
-import { Conflict, Resolution } from "./types";
+import { Conflict, Resolution } from "../types";
 
 interface ConflictDialogProps {
   open: boolean;
