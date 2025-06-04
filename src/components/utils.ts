@@ -3,18 +3,21 @@ import {
   ExpandedWidget,
   Group,
   Marketplace,
-  StructuredData,
+  StructuredData, ValidationError, ValidationResult,
   Widget,
 } from "./types";
+import Ajv from 'ajv';
+import schema from './ImportSchema.json';
+const ajv = new Ajv({ allErrors: true });
 
 export const calculateCorrectPath = (originalPath: string, data: StructuredData): string => {
     const parts = originalPath.split(".");
-  
+
     let correctedPath = "";
-  
+
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
-  
+
       if (part.startsWith("marketplaceGroups")) {
         // Извлекаем код группы из строки пути
         const groupCodeMatch = part.match(/$$([\w\d]+)$$/);
@@ -22,7 +25,7 @@ export const calculateCorrectPath = (originalPath: string, data: StructuredData)
           throw new Error("Unable to extract group code from path");
         }
         const groupCode = groupCodeMatch[1]; // Это должен быть код группы, а не индекс
-  
+
         const groupIndex = findGroupIndex(data.groups, groupCode);
         if (groupIndex !== null) {
           correctedPath += `.groups[${groupIndex}]`;
@@ -36,7 +39,7 @@ export const calculateCorrectPath = (originalPath: string, data: StructuredData)
           throw new Error("Unable to extract widget code from path");
         }
         const widgetCode = widgetCodeMatch[1];
-  
+
         const widgetIndex = findWidgetIndex(data.widgets, widgetCode);
         if (widgetIndex !== null) {
           correctedPath += `.widgets[${widgetIndex}]`;
@@ -47,7 +50,7 @@ export const calculateCorrectPath = (originalPath: string, data: StructuredData)
         correctedPath += `.${part}`;
       }
     }
-  
+
     return `data${correctedPath}`;
   };
 
@@ -56,23 +59,23 @@ export const calculateCorrectPath = (originalPath: string, data: StructuredData)
       marketplaces: [] as string[],
       groups: [] as string[],
     };
-    
+
     if (!data) return references;
-    
+
     // Поиск в маркетплейсах
     data.marketplaces.forEach(mp => {
       if (mp.marketplaceGroups?.some(mg => mg.group === code)) {
         references.marketplaces.push(mp.code || 'Unknown Marketplace');
       }
     });
-    
+
     // Поиск в группах
     data.groups.forEach(group => {
       if (group.groupWidgets?.some(gw => gw.widget === code)) {
         references.groups.push(group.code || 'Unknown Group');
       }
     });
-    
+
     return references;
   };
 
@@ -132,4 +135,120 @@ export const getMarketplaceGroups = (
       };
     })
     .filter(Boolean) as ExpandedGroup[];
+};
+
+
+export const validateStructure = (data: StructuredData): ValidationResult => {
+  const errors: ValidationError[] = [];
+
+  // 1. Валидация по схеме (заглушка - реализуйте по вашему ImportSchema.json)
+  const schemaErrors = validateAgainstSchema(data);
+  errors.push(...schemaErrors);
+
+  // 2. Проверка связей между сущностями
+  const relationErrors = validateRelations(data);
+  errors.push(...relationErrors);
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
+const validateAgainstSchema = (data: StructuredData): ValidationError[] => {
+  const validate = ajv.compile(schema);
+  const valid = validate(data);
+
+  if (!valid && validate.errors) {
+    return validate.errors.map(err => ({
+      type: 'schema',
+      message: `${err.instancePath} ${err.message}`,
+      path: err.instancePath
+    }));
+  }
+
+  return [];
+};
+
+const validateRelations = (data: StructuredData): ValidationError[] => {
+  const errors: ValidationError[] = [];
+  const { marketplaces, groups, widgets } = data;
+
+  // Помечаем все сущности как "не найденные" изначально
+  const groupMap = new Map<string, boolean>();
+  const widgetMap = new Map<string, boolean>();
+  const marketplaceMap = new Map<string, boolean>();
+
+  groups.forEach(g => groupMap.set(g.code, false));
+  widgets.forEach(w => widgetMap.set(w.code, false));
+  marketplaces.forEach(m => marketplaceMap.set(m.code, m.isInitial)); // Начальные витрины считаем "найденными"
+
+  // 1. Проверка связей витрин с группами
+  marketplaces.forEach(marketplace => {
+    marketplace.marketplaceGroups?.forEach(mg => {
+      if (!groupMap.has(mg.group)) {
+        errors.push({
+          type: 'relation',
+          message: `Группа "${mg.group}" не найдена`,
+          path: `marketplaces[code=${marketplace.code}].marketplaceGroups`
+        });
+      } else {
+        groupMap.set(mg.group, true);
+      }
+    });
+  });
+
+  // 2. Группы без связей с витринами
+  groupMap.forEach((found, code) => {
+    if (!found) {
+      errors.push({
+        type: 'relation',
+        message: `Группа "${code}" не привязана ни к одной витрине`,
+        path: `groups[code=${code}]`
+      });
+    }
+  });
+
+  // 3. Проверка связей групп с виджетами
+  groups.forEach(group => {
+    group.groupWidgets?.forEach(gw => {
+      if (!widgetMap.has(gw.widget)) {
+        errors.push({
+          type: 'relation',
+          message: `Виджет "${gw.widget}" не найден`,
+          path: `groups[code=${group.code}].groupWidgets`
+        });
+      } else {
+        widgetMap.set(gw.widget, true);
+      }
+    });
+  });
+
+  // 4. Виджеты без связей с группами
+  widgetMap.forEach((found, code) => {
+    if (!found) {
+      errors.push({
+        type: 'relation',
+        message: `Виджет "${code}" не привязан ни к одной группе`,
+        path: `widgets[code=${code}]`
+      });
+    }
+  });
+
+  // 5. Проверка ссылок на витрины в экшенах
+  [...marketplaces, ...groups, ...widgets].forEach(entity => {
+    entity.actions?.forEach(action => {
+      action.properties?.forEach(prop => {
+        if (prop.code === 'marketplaceId' && !marketplaceMap.has(prop.value)) {
+          errors.push({
+            type: 'relation',
+            message: `Витрины "${prop.value}" не существует, но action ссылается на нее `,
+            path: `${entity.type}s[code=${entity.code}].actions`
+          });
+        }
+      });
+    });
+  });
+
+  return errors;
 };
