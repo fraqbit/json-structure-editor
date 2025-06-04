@@ -28,18 +28,6 @@ interface JsonTreeViewProps {
   getGroupWidgets: (group: Group) => ExpandedWidget[];
 }
 
-interface RowComponentProps {
-  isExpanded: boolean;
-  handleToggleMarketplace: (index: number) => void;
-  index: number;
-  mp: Marketplace;
-  onSelectNode: (node: any, path: string) => void;
-  onAttachGroups: (marketplace: Marketplace) => void;
-  onAttachWidgets: (group: Group) => void;
-  getMarketplaceGroups: (mp: Marketplace) => ExpandedGroup[];
-  getGroupWidgets: (group: Group) => ExpandedWidget[];
-}
-
 const JsonTreeView: React.FC<JsonTreeViewProps> = ({
   data,
   onSelectNode,
@@ -160,18 +148,23 @@ const RowComponent: React.FC<RowComponentProps> = React.memo(
               </IconButton>
             </Box>
           </AccordionSummary>
-          <AccordionDetails sx={{ pt: 0, bgcolor: "background.default" }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              Группы на витрине
-            </Typography>
-            <MarketplaceGroups
-              marketplaceGroups={marketplaceGroups}
-              mpIndex={index}
-              onSelectNode={onSelectNode}
-              onAttachWidgets={onAttachWidgets}
-              getGroupWidgets={getGroupWidgets}
-            />
-          </AccordionDetails>
+            {
+                isExpanded && (
+                    <AccordionDetails sx={{ pt: 0, bgcolor: "background.default" }}>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                            Группы на витрине
+                        </Typography>
+                        <MarketplaceGroups
+                            marketplaceGroups={marketplaceGroups}
+                            mpIndex={index}
+                            onSelectNode={onSelectNode}
+                            onAttachWidgets={onAttachWidgets}
+                            getGroupWidgets={getGroupWidgets}
+                        />
+                    </AccordionDetails>
+                )
+            }
+
         </Accordion>
       </Paper>
     );
