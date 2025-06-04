@@ -56,9 +56,9 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   };
 
   return (
-    <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
+    <Paper elevation={3} sx={{ p: 2, mb: 3 }} style={{ display: 'flex', gap: 20, alignItems: 'flex-start'}}>
       {/* Поисковая строка */}
-      <Box sx={{ display: "flex", alignItems: "center", mb: 2, width: "100%" }}>
+      <Box sx={{ display: "flex", alignItems: "center", mb: 2, width: "50%" }}>
         <SearchIcon sx={{ mr: 1, color: "action.active" }} />
         <TextField
           fullWidth
@@ -71,11 +71,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         />
       </Box>
 
-      <Divider sx={{ my: 2 }} />
-
       {/* Активные фильтры */}
       <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-        <FilterListIcon sx={{ mr: 1, color: "action.active" }} />
         <Typography variant="subtitle2" style={{ fontFamily: 'IBM Plex Mono', fontWeight: 500 }}>Фильтры:</Typography>
         <Box sx={{ ml: 1, display: "flex", flexWrap: "wrap", gap: 1 }}>
           {Object.entries(filters).map(([key, values]) => {
@@ -94,7 +91,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
       </Box>
 
       {/* Настройка фильтра */}
-      <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start" }}>
+      <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start", flexDirection: 'column', width: '50%' }}>
         <Autocomplete
           options={availableFilters}
           getOptionLabel={(option) => `${option.type}.${option.field}`}
