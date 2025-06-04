@@ -95,3 +95,14 @@ export interface AttachmentDialogState {
   target: any; // Marketplace или Group, к которому привязываем
   availableItems: any[]; // Группы или виджеты для привязки
 }
+
+export type ValidationError = {
+  type: 'schema' | 'relation';
+  message: string;
+  path?: string;
+};
+
+export type ValidationResult = {
+  isValid: boolean;
+  errors: ValidationError[];
+};
