@@ -8,6 +8,8 @@ import {
 } from "./types";
 import Ajv from 'ajv';
 import schema from './ImportSchema.json';
+import {useMemo} from "react";
+import {processStructure} from "./sortUtils";
 const ajv = new Ajv({ allErrors: true });
 
 export const calculateCorrectPath = (originalPath: string, data: StructuredData): string => {
@@ -251,4 +253,19 @@ const validateRelations = (data: StructuredData): ValidationError[] => {
   });
 
   return errors;
+};
+
+export const useSortedData = (data: StructuredData | null) => {
+  return useMemo(() => {
+    if (!data) return null;
+    return processStructure(data);
+  }, [data]);
+};
+
+export const normalizeForComparison = (data: StructuredData): StructuredData => {
+  return {
+    marketplaces: data.marketplaces.map(({ found, ...rest }) => rest),
+    groups: data.groups.map(({ found, ...rest }) => rest),
+    widgets: data.widgets.map(({ found, ...rest }) => rest)
+  };
 };
