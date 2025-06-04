@@ -3,7 +3,7 @@ export interface Group {
   name: string | null;
   groupWidgets: Array<{
     widget: string;
-    displayOrder?: number;
+    displayOrder: number;
     viewTypeCode?: string;
     [key: string]: any;
   }>;
@@ -47,7 +47,7 @@ export interface Resolution {
 
 export interface MarketplaceGroup {
   group: string;
-  displayOrder?: number;
+  displayOrder: number;
   [key: string]: any;
 }
 
@@ -62,7 +62,7 @@ export interface Marketplace {
 
 // Расширяем MarketplaceGroup, добавляем displayOrder
 export interface ExpandedGroup extends MarketplaceGroup {
-  displayOrder?: number;
+  displayOrder: number;
   [key: string]: any;
 }
 
