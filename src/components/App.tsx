@@ -25,11 +25,13 @@ import {
   Group,
   Marketplace,
   Resolution,
-  StructuredData,
+  StructuredData, ValidationError,
   Widget,
 } from "./types";
 import CreationDialog from "./creation-dialog/CreationDialog";
 import AttachmentDialog from "./attachment-dialog/AttachmentDialog";
+import { ValidationErrorsDialog } from "./validation-dialog/ValidationDialog";
+import {validateStructure} from "./utils";
 
 const applyFilters = (
   data: StructuredData,
@@ -99,6 +101,7 @@ const App = () => {
   const [structuredData, setStructuredData] = useState<StructuredData | null>(
     null
   );
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [selectedNode, setSelectedNode] = useState<any>(null);
   const [nodePath, setNodePath] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
@@ -275,6 +278,9 @@ const App = () => {
     },
     [structuredData]
   );
+
+  const actualGroups = useMemo(() => structuredData?.groups.map((group) => group.code), [structuredData])
+  const actualWidgets = useMemo(() => structuredData?.widgets.map((widget) => widget.code), [structuredData])
 
   const extractFilters = useCallback((data: StructuredData) => {
     if (!data) return;
@@ -497,93 +503,26 @@ const App = () => {
   const handleDownload = () => {
     try {
       if (!structuredData) return;
+      const jsonData = JSON.parse(JSON.stringify(structuredData))
+      const validationResult = validateStructure(jsonData)
 
-      // Данные уже в оригинальном формате
-      const blob = new Blob([JSON.stringify(structuredData, null, 2)], {
-        type: "application/json",
-      });
-      saveAs(blob, "edited_data.json");
-      showSnackbar("Файл успешно выгружен", "success");
+      if (!validationResult.isValid) {
+        setValidationErrors(validationResult.errors)
+        showSnackbar(
+            `Найдено ${validationResult.errors.length} ошибок в данных`,
+            'warning'
+        );
+      } else {
+        const blob = new Blob([JSON.stringify(structuredData, null, 2)], {
+          type: "application/json",
+        });
+        saveAs(blob, "edited_data.json");
+        showSnackbar("Файл успешно выгружен", "success");
+      }
     } catch (error) {
       showSnackbar("Ошибка при выгрузке файла", "error");
     }
   };
-
-  const transformToOriginal = (
-    structuredData: StructuredData | null
-  ): StructuredData | null => {
-    if (!structuredData) return null;
-
-    const { marketplaces, groups, widgets } = structuredData;
-
-    // Создаём мапы уникальных групп и виджетов
-    const uniqueGroups = new Map<string, Group>();
-    const uniqueWidgets = new Map<string, Widget>();
-
-    // Добавляем группы и виджеты в мапы
-    groups.forEach((group) => uniqueGroups.set(group.code, group));
-    widgets.forEach((widget) => uniqueWidgets.set(widget.code, widget));
-
-    // Преобразовываем маркетплейсы
-    const transformedMarketplaces: Marketplace[] = marketplaces.map((mp) => {
-      const transformedMarketplaceGroups = mp.marketplaceGroups?.map((mg) => ({
-        group: mg.group, // Сохраняем ссылку на группу
-        displayOrder: mg.displayOrder, // Сохраняем порядок отображения
-      }));
-
-      return {
-        ...mp,
-        marketplaceGroups: transformedMarketplaceGroups,
-      };
-    });
-
-    // Возвращаем оригинальные группы и виджеты
-    const transformedGroups: Group[] = Array.from(uniqueGroups.values());
-    const transformedWidgets: Widget[] = Array.from(uniqueWidgets.values());
-
-    return {
-      marketplaces: transformedMarketplaces,
-      groups: transformedGroups,
-      widgets: transformedWidgets,
-    };
-  };
-
-  const handleResolveConflicts = useCallback(
-    (resolution: Resolution) => {
-      if (resolution.action === "apply-all") {
-        // Применять все изменения глобально
-        setStructuredData(transformToOriginal(structuredData));
-      } else if (resolution.action === "clone") {
-        // Клонирование объекта с заданием нового кода
-        const clonedData = JSON.parse(JSON.stringify(structuredData));
-        const targetConflict = conflicts.find(
-          (c) => c.code === resolution.newCode
-        );
-
-        if (targetConflict) {
-          switch (targetConflict.type) {
-            case "group":
-              clonedData.groups.push({
-                ...targetConflict.new,
-                code: resolution.newCode,
-              });
-              break;
-            case "widget":
-              clonedData.widgets.push({
-                ...targetConflict.new,
-                code: resolution.newCode,
-              });
-              break;
-          }
-        }
-
-        setStructuredData(clonedData);
-      }
-
-      setOpenConflictDialog(false);
-    },
-    [structuredData, conflicts]
-  );
 
   const showSnackbar = (
     message: string,
@@ -635,13 +574,20 @@ const App = () => {
 
   return (
     <>
-      <Container maxWidth="lg" style={{ paddingTop: 20, paddingBottom: 20 }}>
+      <Container maxWidth="xl" style={{ paddingTop: 20, paddingBottom: 20 }}>
         <CreationDialog
           open={creationDialog.open}
           onClose={() => setCreationDialog({ open: false, type: null })}
           onSubmit={handleCreateEntity}
-          data={structuredData || { marketplaces: [], groups: [], widgets: [] }}
+          actualWidgets={actualWidgets}
+          actualGroups={actualGroups}
           type={creationDialog.type}
+        />
+        <ValidationErrorsDialog
+            data={structuredData}
+            open={validationErrors.length > 0}
+            errors={validationErrors}
+            onClose={() => setValidationErrors([])}
         />
         {structuredData && (
           <AttachmentDialog
@@ -650,7 +596,7 @@ const App = () => {
               setAttachmentDialog({ ...attachmentDialog, open: false })
             }
             onSubmit={handleAttachItems}
-            data={structuredData}
+            data={filteredData}
             type={
               attachmentDialog.type === "marketplace" ? "groups" : "widgets"
             }
@@ -702,6 +648,34 @@ const App = () => {
               Выгрузить JSON
             </Button>
           )}
+
+          {structuredData && (
+              <>
+                <Button
+                    variant="outlined"
+                    onClick={() =>
+                        setCreationDialog({ open: true, type: "marketplace" })
+                    }
+                    style={{ fontFamily: "IBM Plex Mono", fontWeight: 500, marginLeft: 10 }}
+                >
+                  + Маркетплейс
+                </Button>
+                <Button
+                    variant="outlined"
+                    onClick={() => setCreationDialog({ open: true, type: "group" })}
+                    style={{ fontFamily: "IBM Plex Mono", fontWeight: 500, marginLeft: 10  }}
+                >
+                  + Группа
+                </Button>
+                <Button
+                    variant="outlined"
+                    onClick={() => setCreationDialog({ open: true, type: "widget" })}
+                    style={{ fontFamily: "IBM Plex Mono", fontWeight: 500, marginLeft: 10  }}
+                >
+                  + Виджет
+                </Button>
+              </>
+          )}
         </Box>
 
         {!structuredData && !loading && (
@@ -715,33 +689,7 @@ const App = () => {
           </Paper>
         )}
 
-        {structuredData && (
-          <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
-            <Button
-              variant="outlined"
-              onClick={() =>
-                setCreationDialog({ open: true, type: "marketplace" })
-              }
-              style={{ fontFamily: "IBM Plex Mono", fontWeight: 500 }}
-            >
-              + Маркетплейс
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={() => setCreationDialog({ open: true, type: "group" })}
-              style={{ fontFamily: "IBM Plex Mono", fontWeight: 500 }}
-            >
-              + Группа
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={() => setCreationDialog({ open: true, type: "widget" })}
-              style={{ fontFamily: "IBM Plex Mono", fontWeight: 500 }}
-            >
-              + Виджет
-            </Button>
-          </Box>
-        )}
+
 
         {structuredData && (
           <FilterPanel
@@ -782,13 +730,6 @@ const App = () => {
             </Grid>
           </Grid>
         )}
-        <ConflictDialog
-          open={openConflictDialog}
-          conflicts={conflicts}
-          onClose={() => setOpenConflictDialog(false)}
-          onResolve={handleResolveConflicts}
-        />
-
         <Snackbar
           open={snackbar.open}
           autoHideDuration={6000}
@@ -804,13 +745,12 @@ const App = () => {
           </Alert>
         </Snackbar>
       </Container>
-      <Box
+      {structuredData && (<Box
         sx={{
           minHeight: "80px",
           backgroundColor: "#1976d2",
-          width: "60%",
+          width: "100%",
           color: "white",
-          transform: "translate(calc(100%/3))",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
@@ -823,7 +763,7 @@ const App = () => {
         >
           ONLY FOR USE IN INVSHOW SBERBANK TEAM!
         </Typography>
-      </Box>
+      </Box>)}
     </>
   );
 };
