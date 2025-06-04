@@ -10,10 +10,8 @@ import {
   Grid,
   Paper,
 } from "@mui/material";
-import { saveAs } from "file-saver";
 import JsonTreeView from "../components/json-tree-view/JsonTreeView";
 import JsonEditor from "./json-editor/JsonEditor";
-import ConflictDialog from "./conflict-dialog/ConflictDialog";
 import FilterPanel from "../components/filter-panel/FilterPanel";
 import {
   AttachmentDialogState,
@@ -31,7 +29,11 @@ import {
 import CreationDialog from "./creation-dialog/CreationDialog";
 import AttachmentDialog from "./attachment-dialog/AttachmentDialog";
 import { ValidationErrorsDialog } from "./validation-dialog/ValidationDialog";
-import {validateStructure} from "./utils";
+import {normalizeForComparison, validateStructure} from "./utils";
+import { processStructure } from "./sortUtils";
+import {ChangeItem, compareStructures} from "./compareStructures";
+import ExportConfirmationDialog from "./export-confirmation-dialog/ExportConfirmationDialog";
+import saveAs from "file-saver";
 
 const applyFilters = (
   data: StructuredData,
@@ -106,6 +108,9 @@ const App = () => {
   const [nodePath, setNodePath] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [conflicts] = useState<any[]>([]);
+  const [originalData, setOriginalData] = useState<StructuredData | null>(null);
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportChanges, setExportChanges] = useState<ChangeItem[]>([]);
   const [openConflictDialog, setOpenConflictDialog] = useState<boolean>(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -163,12 +168,12 @@ const App = () => {
           .filter((code) => !existingGroups.some((g) => g.group === code))
           .map((code) => ({
             group: code,
-            displayOrder: existingGroups.length + 1,
+            displayOrder: 0,
           }));
 
         newData.marketplaces[mpIndex].marketplaceGroups = [
-          ...existingGroups,
           ...newGroups,
+          ...existingGroups,
         ];
       } else if (attachmentDialog.type === "group") {
         // Привязываем виджеты к группе
@@ -184,12 +189,12 @@ const App = () => {
           .filter((code) => !existingWidgets.some((w) => w.widget === code))
           .map((code) => ({
             widget: code,
-            displayOrder: existingWidgets.length + 1,
+            displayOrder: 0,
           }));
 
         newData.groups[groupIndex].groupWidgets = [
-          ...existingWidgets,
           ...newWidgets,
+          ...existingWidgets,
         ];
       }
 
@@ -339,8 +344,9 @@ const App = () => {
       const result = e.target?.result;
       if (typeof result === "string") {
         try {
-          const parsedData = JSON.parse(result);
-          setJsonData(parsedData);
+          const parsedData = JSON.parse(result)
+          setOriginalData(parsedData)
+          setJsonData(processStructure(parsedData));
           setLoading(false); // ← Убедитесь, что эта строчка выполняется
         } catch (err) {
           showSnackbar("Ошибка при чтении файла", "error");
@@ -500,30 +506,25 @@ const App = () => {
     [structuredData]
   );
 
-  const handleDownload = () => {
-    try {
-      if (!structuredData) return;
-      const jsonData = JSON.parse(JSON.stringify(structuredData))
-      const validationResult = validateStructure(jsonData)
+  const handleDownload = async () => {
+    if (!structuredData || !originalData) return;
 
-      if (!validationResult.isValid) {
-        setValidationErrors(validationResult.errors)
-        showSnackbar(
-            `Найдено ${validationResult.errors.length} ошибок в данных`,
-            'warning'
-        );
-      } else {
-        const blob = new Blob([JSON.stringify(structuredData, null, 2)], {
-          type: "application/json",
-        });
-        saveAs(blob, "edited_data.json");
-        showSnackbar("Файл успешно выгружен", "success");
-      }
-    } catch (error) {
-      showSnackbar("Ошибка при выгрузке файла", "error");
-    }
+    // 1. Валидация данных
+    const validationResult = validateStructure(structuredData);
+    setValidationErrors(validationResult.errors);
+
+    const normalizedCurrent = normalizeForComparison(structuredData);
+    const normalizedOriginal = normalizeForComparison(originalData);
+
+    const changes = compareStructures(normalizedCurrent, normalizedOriginal);
+    setExportChanges(changes);
+
+    // 3. Показываем диалог с информацией
+    setShowExportDialog(true);
   };
 
+  console.log('Structured', structuredData)
+  console.log('Original', originalData)
   const showSnackbar = (
     message: string,
     severity: "info" | "error" | "success" | "warning"
@@ -533,6 +534,20 @@ const App = () => {
 
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
+  };
+
+  const confirmExport = () => {
+    try {
+      const blob = new Blob([JSON.stringify(structuredData, null, 2)], {
+        type: "application/json",
+      });
+      saveAs(blob, "edited_data.json");
+      showSnackbar("Файл успешно выгружен", "success");
+    } catch (error) {
+      showSnackbar("Ошибка при выгрузке файла", "error");
+    } finally {
+      setShowExportDialog(false);
+    }
   };
 
   const handleFilterChange = useCallback((filterKey: string, values: any[]) => {
@@ -575,6 +590,13 @@ const App = () => {
   return (
     <>
       <Container maxWidth="xl" style={{ paddingTop: 20, paddingBottom: 20 }}>
+        <ExportConfirmationDialog
+            open={showExportDialog}
+            errors={validationErrors}
+            changes={exportChanges}
+            onCancel={() => setShowExportDialog(false)}
+            onConfirm={confirmExport}
+        />
         <CreationDialog
           open={creationDialog.open}
           onClose={() => setCreationDialog({ open: false, type: null })}
@@ -582,12 +604,6 @@ const App = () => {
           actualWidgets={actualWidgets}
           actualGroups={actualGroups}
           type={creationDialog.type}
-        />
-        <ValidationErrorsDialog
-            data={structuredData}
-            open={validationErrors.length > 0}
-            errors={validationErrors}
-            onClose={() => setValidationErrors([])}
         />
         {structuredData && (
           <AttachmentDialog
