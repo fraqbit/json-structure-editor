@@ -1,81 +1,142 @@
 import React, { useState, useEffect } from "react";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Box,
-  Typography,
-  Autocomplete,
-  Chip,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Button,
+    TextField,
+    Box,
+    Typography,
+    Autocomplete,
+    Chip,
+    Tabs,
+    Tab,
+    FormControlLabel,
+    Switch,
 } from "@mui/material";
-import { StructuredData, EntityCreationData } from "../types";
+import {EntityCreationData, Group, Widget} from "../types";
 
 interface CreationDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onSubmit: (data: EntityCreationData) => void;
-  data: StructuredData;
-  type: "marketplace" | "group" | "widget" | null;
+    open: boolean;
+    onClose: () => void;
+    onSubmit: (data: EntityCreationData) => void;
+    type: "marketplace" | "group" | "widget" | null;
+    actualGroups: string[]
+    actualWidgets: string[]
 }
 
+
 const CreationDialog: React.FC<CreationDialogProps> = ({
-  open,
-  onClose,
-  onSubmit,
-  data,
-  type,
-}) => {
-  const [formData, setFormData] = useState<Record<string, any>>({});
-  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
-  const [selectedWidgets, setSelectedWidgets] = useState<string[]>([]);
+                                                          open,
+                                                          onClose,
+                                                          onSubmit,
+                                                          type,
+    actualGroups, actualWidgets
+                                                      }) => {
+    const [formData, setFormData] = useState<Record<string, any>>({});
+    const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
+    const [selectedWidgets, setSelectedWidgets] = useState<string[]>([]);
+    const [jsonInput, setJsonInput] = useState<string>("");
+    const [isJsonMode, setIsJsonMode] = useState<boolean>(true);
+    const [jsonError, setJsonError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Сброс формы при открытии
-    if (open) {
-      setFormData({});
-      setSelectedGroups([]);
-      setSelectedWidgets([]);
-    }
-  }, [open, type]);
+    useEffect(() => {
+        if (open) {
+            setFormData({});
+            setSelectedGroups([]);
+            setSelectedWidgets([]);
+            setJsonInput("");
+            setJsonError(null);
+        }
+    }, [open, type]);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+    useEffect(() => {
+        if (isJsonMode && jsonInput) {
+            try {
+                const parsed = JSON.parse(jsonInput);
+                setFormData(parsed);
+                setJsonError(null);
 
-  const handleSubmit = () => {
-    const entityData: EntityCreationData = {
-      type: type!,
-      code: formData.code || "",
-      ...formData,
+                if (type === "marketplace" && parsed.marketplaceGroups) {
+                    setSelectedGroups(parsed.marketplaceGroups.map((g: any) => g.group));
+                }
+
+                if (type === "group" && parsed.groupWidgets) {
+                    setSelectedWidgets(parsed.groupWidgets.map((w: any) => w.widget));
+                }
+            } catch (err) {
+                setJsonError("Невалидный JSON");
+            }
+        }
+    }, [jsonInput, isJsonMode, type]);
+
+    const handleModeChange = () => {
+        setIsJsonMode(!isJsonMode);
     };
 
-    if (type === "marketplace") {
-      entityData.marketplaceGroups = selectedGroups.map((group) => ({
-        group,
-        displayOrder: 0, // Порядок по умолчанию
-      }));
-    }
+    const handleJsonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setJsonInput(e.target.value);
+    };
 
-    if (type === "group") {
-      entityData.groupWidgets = selectedWidgets.map((widget) => ({
-        widget,
-        displayOrder: 0, // Порядок по умолчанию
-      }));
-    }
+    const handleChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => {
+        const { name, value } = e.target;
+        setFormData((prev) => ({ ...prev, [name]: value }));
+    };
 
-    onSubmit(entityData);
-    onClose();
-  };
+    const handleSubmit = () => {
+        const entityData: EntityCreationData = {
+            type: type!,
+            code: formData.code || "",
+            ...formData,
+        };
 
-  const renderFormFields = () => {
-    switch (type) {
-      case "marketplace":
+        if (type === "marketplace") {
+            entityData.marketplaceGroups = selectedGroups.map((group) => ({
+                group,
+                displayOrder: 0,
+            }));
+        }
+
+        if (type === "group") {
+            entityData.groupWidgets = selectedWidgets.map((widget) => ({
+                widget,
+                displayOrder: 0,
+            }));
+        }
+
+        onSubmit(entityData);
+        onClose();
+    };
+
+    const renderFormFields = () => {
+        if (isJsonMode) {
+            return (
+                <TextField
+                    fullWidth
+                    label="JSON данные"
+                    name="json"
+                    value={jsonInput}
+                    onChange={handleJsonChange}
+                    margin="normal"
+                    multiline
+                    rows={12}
+                    error={!!jsonError}
+                    helperText={jsonError}
+                    placeholder={`Введите данные в формате JSON, например:\n${JSON.stringify({
+                        code: "example",
+                        title: "Пример",
+                        description: "Описание",
+                        // другие поля в зависимости от типа
+                    }, null, 2)}`}
+                />
+            );
+        }
+
+        switch (type) {
+            case "marketplace":
         return (
           <>
             <TextField
@@ -197,7 +258,7 @@ const CreationDialog: React.FC<CreationDialogProps> = ({
             </Typography>
             <Autocomplete
               multiple
-              options={data.groups.map((g) => g.code)}
+              options={actualGroups}
               value={selectedGroups}
               onChange={(_, value) => setSelectedGroups(value)}
               renderInput={(params) => (
@@ -327,7 +388,7 @@ const CreationDialog: React.FC<CreationDialogProps> = ({
             </Typography>
             <Autocomplete
               multiple
-              options={data.widgets.map((w) => w.code)}
+              options={actualWidgets}
               value={selectedWidgets}
               onChange={(_, value) => setSelectedWidgets(value)}
               renderInput={(params) => (
@@ -477,28 +538,40 @@ const CreationDialog: React.FC<CreationDialogProps> = ({
     }
   };
 
-  return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>
-        {type === "marketplace" && "Создать новый маркетплейс"}
-        {type === "group" && "Создать новую группу"}
-        {type === "widget" && "Создать новый виджет"}
-      </DialogTitle>
-      <DialogContent>
-        <Box sx={{ mt: 1 }}>{renderFormFields()}</Box>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Отмена</Button>
-        <Button
-          onClick={handleSubmit}
-          variant="contained"
-          disabled={!formData.code}
-        >
-          Создать
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
+    return (
+        <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+            <DialogTitle>
+                {type === "marketplace" && "Создать новый маркетплейс"}
+                {type === "group" && "Создать новую группу"}
+                {type === "widget" && "Создать новый виджет"}
+            </DialogTitle>
+            <DialogContent>
+                <Box sx={{ mb: 2 }}>
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={isJsonMode}
+                                onChange={handleModeChange}
+                                color="primary"
+                            />
+                        }
+                        label={isJsonMode ? "Режим JSON" : "Ручной ввод"}
+                    />
+                </Box>
+                <Box sx={{ mt: 1 }}>{renderFormFields()}</Box>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={onClose}>Отмена</Button>
+                <Button
+                    onClick={handleSubmit}
+                    variant="contained"
+                    disabled={!formData.code || !!jsonError}
+                >
+                    Создать
+                </Button>
+            </DialogActions>
+        </Dialog>
+    );
 };
 
 export default CreationDialog;
