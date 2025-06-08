@@ -13,7 +13,6 @@ import EditIcon from "@mui/icons-material/Edit";
 import AddLinkIcon from "@mui/icons-material/AddLink";
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { StructuredData, Marketplace, Group, ExpandedGroup, ExpandedWidget } from "../types";
-import AddIcon from "@mui/icons-material/Add";
 import GroupWidgets from "./GroupWidgets";
 
 interface RowComponentProps {

@@ -1,6 +1,4 @@
 import {
-  ExpandedGroup,
-  ExpandedWidget,
   Filters,
   Group,
   Marketplace,
@@ -8,11 +6,11 @@ import {
   ValidationError,
   ValidationResult,
   Widget,
-} from "./types";
+} from "../components/types";
 import Ajv from "ajv";
-import schema from "./ImportSchema.json";
+import schema from "../components/ImportSchema.json";
 import { useMemo } from "react";
-import { processStructure } from "./sortUtils";
+import { processStructure } from "../utils/sortUtils";
 const ajv = new Ajv({ allErrors: true });
 
 export const applyFilters = (

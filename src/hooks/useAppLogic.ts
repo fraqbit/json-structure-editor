@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { applyFilters, normalizeForComparison, validateStructure } from "../components/utils";
-import { processStructure } from "../components/sortUtils";
-import { ChangeItem, compareStructures } from "../components/compareStructures";
+import { applyFilters, normalizeForComparison, validateStructure } from "../utils/utils";
+import { processStructure } from "../utils/sortUtils";
+import { ChangeItem, compareStructures } from "../utils/compareStructures";
 import { FilterOption, Filters, StructuredData, ValidationError, AttachmentDialogState as OrigAttachmentDialogState, EntityCreationData, Group, Marketplace, ExpandedGroup, ExpandedWidget } from "../components/types";
 import saveAs from "file-saver";
 

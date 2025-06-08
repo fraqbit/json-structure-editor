@@ -1,5 +1,5 @@
 // types/sortUtils.ts
-import { StructuredData, Marketplace, Group } from "./types";
+import { StructuredData, Marketplace, Group } from "../components/types";
 
 // Шаблон порядка полей для каждого типа
 const FIELD_ORDER_TEMPLATE = {

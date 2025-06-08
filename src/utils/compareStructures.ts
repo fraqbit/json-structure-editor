@@ -1,5 +1,5 @@
 // utils/compareStructures.ts
-import { StructuredData } from './types';
+import { StructuredData } from '../components/types';
 
 export interface ChangeItem {
     type: 'marketplace' | 'group' | 'widget' | 'relation';

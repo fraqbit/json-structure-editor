@@ -1,6 +1,6 @@
 import {useCallback} from "react";
 import {ChangeItem} from "./compareStructures";
-import {StructuredData} from "./types";
+import {StructuredData} from "../components/types";
 
 export const getChanges = useCallback((current: StructuredData, original: StructuredData) => {
     const changes: ChangeItem[] = [];

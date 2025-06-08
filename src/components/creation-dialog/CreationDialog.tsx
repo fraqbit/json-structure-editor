@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { TextField, Box, Typography, Autocomplete, Chip, Tabs, Tab, FormControlLabel, Switch, Button, MenuItem, Select, InputLabel, FormControl } from "@mui/material";
+import { TextField, Autocomplete, Button, MenuItem, Select, InputLabel, FormControl } from "@mui/material";
 import { EntityCreationData } from "../types";
 import BaseDialog from "../common/BaseDialog";
 
