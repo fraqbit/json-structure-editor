@@ -11,6 +11,14 @@ import { useAppLogic } from "../hooks/useAppLogic";
 const App = () => {
   const logic = useAppLogic();
 
+  const allCodes = logic.structuredData
+    ? [
+        ...logic.structuredData.marketplaces.map(mp => mp.code),
+        ...logic.structuredData.groups.map(g => g.code),
+        ...logic.structuredData.widgets.map(w => w.code),
+      ]
+    : [];
+
   if (logic.loading) {
     return (
       <Container maxWidth="lg" style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
@@ -41,6 +49,7 @@ const App = () => {
           type={logic.creationDialog.type}
           actualMarketplaces={logic.structuredData ? logic.structuredData.marketplaces : []}
           initialData={logic.creationDialog.formData}
+          existingCodes={allCodes}
         />
         {logic.structuredData && (
           <AttachmentDialog

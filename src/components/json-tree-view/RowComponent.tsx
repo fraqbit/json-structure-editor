@@ -255,6 +255,15 @@ const RowComponent: React.FC<RowComponentProps> = React.memo(
                                             <span style={{ fontWeight: 'bold', color: 'red' }}>×</span>
                                           </IconButton>
                                         )}
+                                        <IconButton
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (onCopy) onCopy(group, 'group');
+                                          }}
+                                          size="small"
+                                        >
+                                          <ContentCopyIcon fontSize="small" />
+                                        </IconButton>
                                       </Box>
                                     </AccordionSummary>
                                     <AccordionDetails sx={{ pt: 0, bgcolor: "background.default" }}>
@@ -270,6 +279,7 @@ const RowComponent: React.FC<RowComponentProps> = React.memo(
                                         onSelectNode={onSelectNode}
                                         getGroupWidgets={getGroupWidgets}
                                         onUnlink={onUnlink}
+                                        onCopy={onCopy}
                                       />
                                     </AccordionDetails>
                                   </Accordion>
@@ -346,6 +356,15 @@ const RowComponent: React.FC<RowComponentProps> = React.memo(
                                   <span style={{ fontWeight: 'bold', color: 'red' }}>×</span>
                                 </IconButton>
                               )}
+                              <IconButton
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (onCopy) onCopy(group, 'group');
+                                }}
+                                size="small"
+                              >
+                                <ContentCopyIcon fontSize="small" />
+                              </IconButton>
                             </Box>
                           </AccordionSummary>
                           <AccordionDetails sx={{ pt: 0, bgcolor: "background.default" }}>
@@ -361,6 +380,7 @@ const RowComponent: React.FC<RowComponentProps> = React.memo(
                               onSelectNode={onSelectNode}
                               getGroupWidgets={getGroupWidgets}
                               onUnlink={onUnlink}
+                              onCopy={onCopy}
                             />
                           </AccordionDetails>
                         </Accordion>

@@ -1,16 +1,18 @@
 import React from "react";
 import { Paper, Typography, Box, IconButton } from "@mui/material";
 import { Group, ExpandedWidget } from "../types";
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 interface GroupWidgetsProps {
   group: Group;
   onSelectNode: (node: any, path: string) => void;
   getGroupWidgets: (group: Group) => ExpandedWidget[];
   onUnlink?: (type: 'widget', parentCode: string, code: string) => void;
+  onCopy?: (obj: any, type: 'marketplace' | 'group' | 'widget') => void;
 }
 
 const GroupWidgets: React.FC<GroupWidgetsProps> = React.memo(
-  ({ group, onSelectNode, getGroupWidgets, onUnlink }) => {
+  ({ group, onSelectNode, getGroupWidgets, onUnlink, onCopy }) => {
     const widgets = getGroupWidgets(group);
 
     if (widgets.length === 0) {
@@ -57,6 +59,17 @@ const GroupWidgets: React.FC<GroupWidgetsProps> = React.memo(
                   size="small"
                 >
                   <span style={{ fontWeight: 'bold', color: 'red' }}>×</span>
+                </IconButton>
+              )}
+              {onCopy && (
+                <IconButton
+                  onClick={e => {
+                    e.stopPropagation();
+                    onCopy(widget, 'widget');
+                  }}
+                  size="small"
+                >
+                  <ContentCopyIcon fontSize="small" />
                 </IconButton>
               )}
             </Box>

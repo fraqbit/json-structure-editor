@@ -12,6 +12,7 @@ interface CreationDialogProps {
   actualWidgets: string[];
   actualMarketplaces?: { code: string; isInitial?: boolean }[];
   initialData?: Record<string, any>;
+  existingCodes?: string[];
 }
 
 const CreationDialog: React.FC<CreationDialogProps> = ({
@@ -23,6 +24,7 @@ const CreationDialog: React.FC<CreationDialogProps> = ({
   actualWidgets,
   actualMarketplaces = [],
   initialData,
+  existingCodes,
 }) => {
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
@@ -31,18 +33,71 @@ const CreationDialog: React.FC<CreationDialogProps> = ({
   const [jsonInput, setJsonInput] = useState<string>("");
   const [isJsonMode, setIsJsonMode] = useState<boolean>(true);
   const [jsonError, setJsonError] = useState<string | null>(null);
+  const [codeError, setCodeError] = useState<string | null>(null);
+
+  const templates: Record<string, any> = {
+    marketplace: {
+      code: "",
+      title: "",
+      description: "",
+      name: "",
+      channel: "",
+      headerViewTypeCode: "",
+      headerBackImage: "",
+      headerBackStyleCode: "",
+      sortingParameter: "",
+      filteringParameter: "",
+      isInitial: false,
+      marketplaceGroups: [],
+      settingMarketplaces: []
+    },
+    group: {
+      code: "",
+      title: "",
+      name: "",
+      viewTypeCode: "",
+      channel: "",
+      bhb120: false,
+      categoryCode: "",
+      widgetViewTypeCode: "",
+      widgetBackStyleCode: "",
+      groupWidgets: []
+    },
+    widget: {
+      code: "",
+      title: "",
+      name: "",
+      description: "",
+      categoryCode: "",
+      channel: "",
+      bhb120: false,
+      icon: "",
+      underDescription: "",
+      productBackStyleCode: "",
+      actions: [],
+      properties: []
+    }
+  };
 
   // Для выбора marketplace с isInitial === false
   const availableMarketplaces = actualMarketplaces.filter(mp => mp.isInitial === false).map(mp => mp.code);
 
   useEffect(() => {
     if (open) {
-      setFormData(initialData || {});
+      const template = type && !initialData ? templates[type] : undefined;
+      setFormData(initialData || template || {});
       setSelectedGroups([]);
       setSelectedWidgets([]);
       setSelectedMarketplaces([]);
-      setJsonInput(initialData ? JSON.stringify(initialData, null, 2) : "");
+      setJsonInput(
+        initialData
+          ? JSON.stringify(initialData, null, 2)
+          : template
+          ? JSON.stringify(template, null, 2)
+          : ""
+      );
       setJsonError(null);
+      setCodeError(null);
     }
   }, [open, type, initialData]);
 
@@ -67,8 +122,27 @@ const CreationDialog: React.FC<CreationDialogProps> = ({
     }
   }, [jsonInput, isJsonMode, type]);
 
+  useEffect(() => {
+    if (!formData.code) {
+      setCodeError(null);
+      return;
+    }
+    if (typeof formData.code !== 'string' || formData.code.length < 3) {
+      setCodeError('Код должен быть не короче 3 символов');
+      return;
+    }
+    if (existingCodes && existingCodes.includes(formData.code)) {
+      setCodeError('Такой код уже существует');
+      return;
+    }
+    setCodeError(null);
+  }, [formData.code, existingCodes]);
+
   const handleModeChange = () => setIsJsonMode(!isJsonMode);
-  const handleJsonChange = (e: React.ChangeEvent<HTMLInputElement>) => setJsonInput(e.target.value);
+  const handleJsonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setJsonInput(e.target.value);
+    setJsonError(null);
+  };
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -77,6 +151,33 @@ const CreationDialog: React.FC<CreationDialogProps> = ({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
   const handleSubmit = () => {
+    if (isJsonMode) {
+      let parsed: any;
+      try {
+        parsed = JSON.parse(jsonInput);
+      } catch (e) {
+        setJsonError('Невалидный JSON');
+        return;
+      }
+      // Валидация code для JSON-режима
+      if (!parsed.code || typeof parsed.code !== 'string' || parsed.code.length < 3) {
+        setJsonError('Код должен быть не короче 3 символов');
+        return;
+      }
+      if (existingCodes && existingCodes.includes(parsed.code)) {
+        setJsonError('Такой код уже существует');
+        return;
+      }
+      setJsonError(null);
+      parsed.type = type;
+      onSubmit(parsed);
+      setJsonInput("");
+      setJsonError(null);
+      onClose();
+      return;
+    }
+    if (codeError || jsonError) return;
+    if (!formData.code || typeof formData.code !== 'string' || formData.code.length < 3) return;
     const entityData: EntityCreationData = {
       type: type!,
       code: formData.code || "",
@@ -119,7 +220,7 @@ const CreationDialog: React.FC<CreationDialogProps> = ({
         const isInitial = formData.isInitial === true || formData.isInitial === "true";
         return (
           <>
-            <TextField fullWidth label="code" name="code" value={formData.code || ""} onChange={handleChange} margin="normal" required size="small" />
+            <TextField fullWidth label="code" name="code" value={formData.code || ""} onChange={handleChange} margin="normal" required size="small" error={!!codeError} helperText={codeError || ""} />
             <TextField fullWidth label="title" name="title" value={formData.title || ""} onChange={handleChange} margin="normal" size="small" />
             <TextField fullWidth label="description" name="description" value={formData.description || ""} onChange={handleChange} margin="normal" multiline size="small" />
             <TextField fullWidth label="name" name="name" value={formData.name || ""} onChange={handleChange} margin="normal" size="small" />
@@ -164,7 +265,7 @@ const CreationDialog: React.FC<CreationDialogProps> = ({
       case "group":
         return (
           <>
-            <TextField fullWidth label="code" name="code" value={formData.code || ""} onChange={handleChange} margin="normal" required size="small" />
+            <TextField fullWidth label="code" name="code" value={formData.code || ""} onChange={handleChange} margin="normal" required size="small" error={!!codeError} helperText={codeError || ""} />
             <TextField fullWidth label="title" name="title" value={formData.title || ""} onChange={handleChange} margin="normal" size="small" />
             <TextField fullWidth label="name" name="name" value={formData.name || ""} onChange={handleChange} margin="normal" size="small" />
             <TextField fullWidth label="viewTypeCode" name="viewTypeCode" value={formData.viewTypeCode || ""} onChange={handleChange} margin="normal" size="small" />
@@ -191,7 +292,7 @@ const CreationDialog: React.FC<CreationDialogProps> = ({
       case "widget":
         return (
           <>
-            <TextField fullWidth label="code" name="code" value={formData.code || ""} onChange={handleChange} margin="normal" required size="small" />
+            <TextField fullWidth label="code" name="code" value={formData.code || ""} onChange={handleChange} margin="normal" required size="small" error={!!codeError} helperText={codeError || ""} />
             <TextField fullWidth label="title" name="title" value={formData.title || ""} onChange={handleChange} margin="normal" size="small" />
             <TextField fullWidth label="name" name="name" value={formData.name || ""} onChange={handleChange} margin="normal" size="small" />
             <TextField fullWidth label="description" name="description" value={formData.description || ""} onChange={handleChange} margin="normal" size="small" />
@@ -229,7 +330,7 @@ const CreationDialog: React.FC<CreationDialogProps> = ({
       onClose={onClose}
       actions={[
         <Button key="cancel" onClick={onClose}>Отмена</Button>,
-        <Button key="submit" onClick={handleSubmit} variant="contained">Создать</Button>,
+        <Button key="submit" onClick={handleSubmit} variant="contained" disabled={!!codeError || !!jsonError}>Создать</Button>,
         <Button key="mode" onClick={handleModeChange} color="secondary">{isJsonMode ? "Форма" : "JSON"}</Button>,
       ]}
       maxWidth="sm"
