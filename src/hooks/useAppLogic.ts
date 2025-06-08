@@ -417,10 +417,15 @@ export const useAppLogic = () => {
     if (!structuredData) return;
     const newData = { ...structuredData };
     if (type === 'marketplace') {
-      // Удалить marketplace из settingMarketplaces у initial marketplace
-      const mpIndex = newData.marketplaces.findIndex(mp => mp.code === parentCode);
-      if (mpIndex === -1) return;
-      newData.marketplaces[mpIndex].settingMarketplaces = (newData.marketplaces[mpIndex].settingMarketplaces || []).filter(m => m.marketplace !== code);
+      if (parentCode === '') {
+        // Полное удаление маркетплейса
+        newData.marketplaces = newData.marketplaces.filter(mp => mp.code !== code);
+      } else {
+        // Удалить marketplace из settingMarketplaces у initial marketplace
+        const mpIndex = newData.marketplaces.findIndex(mp => mp.code === parentCode);
+        if (mpIndex === -1) return;
+        newData.marketplaces[mpIndex].settingMarketplaces = (newData.marketplaces[mpIndex].settingMarketplaces || []).filter(m => m.marketplace !== code);
+      }
     } else if (type === 'group') {
       // Удалить группу из marketplaceGroups у marketplace
       const mpIndex = newData.marketplaces.findIndex(mp => mp.code === parentCode);
@@ -433,7 +438,7 @@ export const useAppLogic = () => {
       newData.groups[groupIndex].groupWidgets = (newData.groups[groupIndex].groupWidgets || []).filter(w => w.widget !== code);
     }
     setStructuredData(newData);
-    showSnackbar('Связь удалена', 'success');
+    showSnackbar(parentCode === '' && type === 'marketplace' ? 'Витрина удалена' : 'Связь удалена', 'success');
   };
 
   return {
