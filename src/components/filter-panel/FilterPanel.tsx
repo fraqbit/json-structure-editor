@@ -56,7 +56,11 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   };
 
   return (
-    <Paper elevation={3} sx={{ p: 2, mb: 3 }} style={{ display: 'flex', gap: 20, alignItems: 'flex-start'}}>
+    <Paper
+      elevation={3}
+      sx={{ p: 2, mb: 3 }}
+      style={{ display: "flex", gap: 20, alignItems: "flex-start" }}
+    >
       {/* Поисковая строка */}
       <Box sx={{ display: "flex", alignItems: "center", mb: 2, width: "50%" }}>
         <SearchIcon sx={{ mr: 1, color: "action.active" }} />
@@ -67,13 +71,18 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           placeholder="Поиск по code..."
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
-          style={{ fontFamily: 'IBM Plex Mono', fontWeight: 500 }}
+          style={{ fontFamily: "IBM Plex Mono", fontWeight: 500 }}
         />
       </Box>
 
       {/* Активные фильтры */}
       <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-        <Typography variant="subtitle2" style={{ fontFamily: 'IBM Plex Mono', fontWeight: 500 }}>Фильтры:</Typography>
+        <Typography
+          variant="subtitle2"
+          style={{ fontFamily: "IBM Plex Mono", fontWeight: 500 }}
+        >
+          Фильтры:
+        </Typography>
         <Box sx={{ ml: 1, display: "flex", flexWrap: "wrap", gap: 1 }}>
           {Object.entries(filters).map(([key, values]) => {
             if (values.length === 0) return null;
@@ -83,7 +92,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                 key={key}
                 label={`${field}: ${values.join(", ")}`}
                 onDelete={() => onFilterChange(key, [])}
-                style={{ fontFamily: 'IBM Plex Mono', fontWeight: 500 }}
+                style={{ fontFamily: "IBM Plex Mono", fontWeight: 500 }}
               />
             );
           })}
@@ -91,7 +100,15 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
       </Box>
 
       {/* Настройка фильтра */}
-      <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start", flexDirection: 'column', width: '50%' }}>
+      <Box
+        sx={{
+          display: "flex",
+          gap: 2,
+          alignItems: "flex-start",
+          flexDirection: "column",
+          width: "50%",
+        }}
+      >
         <Autocomplete
           options={availableFilters}
           getOptionLabel={(option) => `${option.type}.${option.field}`}

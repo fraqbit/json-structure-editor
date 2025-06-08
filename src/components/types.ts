@@ -57,12 +57,18 @@ export interface Marketplace {
   title: string | null;
   description: string | null;
   marketplaceGroups?: (MarketplaceGroup | null)[];
+  isInitial?: boolean;
+  settingMarketplaces?: Array<{
+    marketplace: string;
+    displayOrder: number;
+  }>;
   [key: string]: any;
 }
 
 // Расширяем MarketplaceGroup, добавляем displayOrder
-export interface ExpandedGroup extends MarketplaceGroup {
+export interface ExpandedGroup extends Group {
   displayOrder: number;
+  isInitial?: boolean;
   [key: string]: any;
 }
 
@@ -106,3 +112,45 @@ export type ValidationResult = {
   isValid: boolean;
   errors: ValidationError[];
 };
+
+export interface RowComponentProps {
+  isExpanded: boolean;
+  handleToggleMarketplace: (index: string) => void;
+  index: string;
+  mp: Marketplace;
+  onSelectNode: (node: any, path: string) => void;
+  onAttachGroups: (marketplace: Marketplace) => void;
+  onAttachWidgets: (group: Group) => void;
+  getMarketplaceGroups: (mp: Marketplace) => ExpandedGroup[];
+  getGroupWidgets: (group: Group) => ExpandedWidget[];
+  isInitial?: boolean
+}
+
+export interface JsonTreeViewProps {
+  data: StructuredData;
+  onSelectNode: (node: any, path: string) => void;
+  onAttachGroups: (marketplace: Marketplace) => void;
+  onAttachWidgets: (group: Group) => void;
+  getMarketplaceGroups: (mp: Marketplace) => ExpandedGroup[];
+  getGroupWidgets: (group: Group) => ExpandedWidget[];
+}
+
+export interface MarketplaceGroupsProps {
+  marketplaceGroups: (ExpandedGroup | Marketplace)[];
+  mpIndex: string | number;
+  onSelectNode: (node: any, path: string) => void;
+  onAttachWidgets: (group: Group) => void;
+  getGroupWidgets: (group: Group) => ExpandedWidget[];
+  getMarketplaceGroups: (mp: Marketplace) => ExpandedGroup[];
+}
+
+export interface LinkedMarketplacesProps {
+  marketplaces: Marketplace[];
+  onSelectNode: (node: any, path: string) => void;
+}
+
+export interface GroupWidgetsProps {
+  group: Group;
+  onSelectNode: (node: any, path: string) => void;
+  getGroupWidgets: (group: Group) => ExpandedWidget[];
+}

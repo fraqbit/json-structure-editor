@@ -11,13 +11,18 @@ import { findReferences } from "../utils";
 import { StructuredData } from "../types";
 
 interface JsonEditorProps {
-  structuredData: StructuredData
+  structuredData: StructuredData;
   node: any;
   path: string;
   onUpdate: (updatedNode: any) => void;
 }
 
-const JsonEditor: React.FC<JsonEditorProps> = ({ structuredData, node, path, onUpdate }) => {
+const JsonEditor: React.FC<JsonEditorProps> = ({
+  structuredData,
+  node,
+  path,
+  onUpdate,
+}) => {
   const [content, setContent] = useState<string>("");
   const [isValidJson, setIsValidJson] = useState<boolean>(true);
   const [hasChanges, setHasChanges] = useState<boolean>(false);

@@ -1,0 +1,262 @@
+{
+    "marketplaces": [
+        {
+            "code": "pifCatalogWeb",
+            "name": null,
+            "title": "Паевые фонды",
+            "description": "Абоба",
+            "channel": "INTERNET_BANK",
+            "headerViewTypeCode": "mainHeader",
+            "headerBackImage": null,
+            "headerBackStyleCode": null,
+            "sortingParameter": "funds_sort",
+            "filteringParameter": "pif_filter",
+            "isInitial": true,
+            "marketplaceGroups": [],
+            "settingMarketplaces": [
+                {
+                    "marketplace": "mainModulePb"
+                }
+            ]
+        },
+        {
+            "code": "mainModulePb",
+            "name": null,
+            "title": "Mobile module",
+            "description": "Abobs",
+            "channel": "MOB_BANK",
+            "headerViewTypeCode": "investmentsCatalogHeader",
+            "headerBackImage": null,
+            "headerBackStyleCode": null,
+            "sortingParameter": null,
+            "filteringParameter": null,
+            "isInitial": false,
+            "marketplaceGroups": [
+                {
+                    "group": "pifReadyRdsAnswerMob",
+                    "displayOrder": 4
+                },
+                {
+                    "group": "footerMobOpif",
+                    "displayOrder": 10
+                }
+            ]
+        }
+    ],
+    "groups": [
+        {
+            "code": "pifReadyRdsAnswerWeb",
+            "name": null,
+            "channel": "INTERNET_BANK",
+            "title": "Группа WEB",
+            "description": null,
+            "bhb120": false,
+            "viewTypeCode": "ToolsGroup",
+            "categoryCode": null,
+            "widgetViewTypeCode": "ToolsCard",
+            "widgetBackStyleCode": null,
+            "groupWidgets": [
+                {
+                    "widget": "pifWidget1",
+                    "displayOrder": 1,
+                    "viewTypeCode": "ToolsCard"
+                },
+                {
+                    "widget": "pifWidget2",
+                    "displayOrder": 2,
+                    "viewTypeCode": "ToolsCard"
+                }
+            ]
+        },
+        {
+            "code": "footerWebOpif",
+            "name": null,
+            "channel": "INTERNET_BANK",
+            "title": "Группа WEB footer",
+            "description": null,
+            "bhb120": false,
+            "viewTypeCode": "footerGroup",
+            "categoryCode": null,
+            "widgetViewTypeCode": "text",
+            "widgetBackStyleCode": null,
+            "groupWidgets": [
+                {
+                    "widget": "footerWidgetWeb",
+                    "displayOrder": 1,
+                    "viewTypeCode": "ToolsCard"
+                }
+            ]
+        },
+        {
+            "code": "pifReadyRdsAnswerMob",
+            "name": null,
+            "channel": "MOB_BANK",
+            "title": "Группа мобилка",
+            "description": null,
+            "bhb120": false,
+            "viewTypeCode": "ToolsGroup",
+            "categoryCode": null,
+            "widgetViewTypeCode": "ToolsCard",
+            "widgetBackStyleCode": null,
+            "groupWidgets": [
+                {
+                    "widget": "pifWidgetMob1",
+                    "displayOrder": 1,
+                    "viewTypeCode": "ToolsCard"
+                },
+                {
+                    "widget": "pifWidgetMob2",
+                    "displayOrder": 2,
+                    "viewTypeCode": "ToolsCard"
+                }
+            ]
+        },
+        {
+            "code": "footerMobOpif",
+            "name": null,
+            "channel": "MOB_BANK",
+            "title": "Группа футер мобилка",
+            "description": null,
+            "bhb120": false,
+            "viewTypeCode": "ToolsGroup",
+            "categoryCode": null,
+            "widgetViewTypeCode": "ToolsCard",
+            "widgetBackStyleCode": null,
+            "groupWidgets": [
+                {
+                    "widget": "footerWidgetMob",
+                    "displayOrder": 1,
+                    "viewTypeCode": "ToolsCard"
+                }
+            ]
+        }
+    ],
+    "widgets": [
+        {
+            "code": "pifWidget1",
+            "channel": "INTERNET_BANK",
+            "bhb120": false,
+            "categoryCode": "answer",
+            "icon": null,
+            "name": "Pif",
+            "description": null,
+            "underDescription": null,
+            "productBackStyleCode": null,
+            "actions": [],
+            "properties": [
+                {
+                    "code": "text_1",
+                    "header": null,
+                    "value": "Dadada",
+                    "title": null,
+                    "units": null
+                }
+            ]
+        },
+        {
+            "code": "pifWidget2",
+            "channel": "INTERNET_BANK",
+            "bhb120": false,
+            "categoryCode": "answer",
+            "icon": null,
+            "name": "Pif",
+            "description": null,
+            "underDescription": null,
+            "productBackStyleCode": null,
+            "actions": [],
+            "properties": [
+                {
+                    "code": "text_1",
+                    "header": null,
+                    "value": "Dadada",
+                    "title": null,
+                    "units": null
+                }
+            ]
+        },
+        {
+            "code": "footerWidgetWeb",
+            "channel": "INTERNET_BANK",
+            "bhb120": false,
+            "categoryCode": "answer footer",
+            "icon": null,
+            "name": "Pif",
+            "description": null,
+            "underDescription": null,
+            "productBackStyleCode": null,
+            "actions": [],
+            "properties": [
+                {
+                    "code": "text_1",
+                    "header": null,
+                    "value": "Dadada",
+                    "title": null,
+                    "units": null
+                }
+            ]
+        },
+        {
+            "code": "pifWidgetMob1",
+            "channel": "MOB_BANK",
+            "bhb120": false,
+            "categoryCode": "answer MOB",
+            "icon": null,
+            "name": "Pif",
+            "description": null,
+            "underDescription": null,
+            "productBackStyleCode": null,
+            "actions": [],
+            "properties": [
+                {
+                    "code": "text_1",
+                    "header": null,
+                    "value": "Dadada MOB",
+                    "title": null,
+                    "units": null
+                }
+            ]
+        },
+        {
+            "code": "pifWidgetMob2",
+            "channel": "MOB_BANK",
+            "bhb120": false,
+            "categoryCode": "answer MOB",
+            "icon": null,
+            "name": "Pif",
+            "description": null,
+            "underDescription": null,
+            "productBackStyleCode": null,
+            "actions": [],
+            "properties": [
+                {
+                    "code": "text_1",
+                    "header": null,
+                    "value": "Dadada MOB",
+                    "title": null,
+                    "units": null
+                }
+            ]
+        },
+        {
+            "code": "footerWidgetMob",
+            "channel": "MOB_BANK",
+            "bhb120": false,
+            "categoryCode": "answer footer",
+            "icon": null,
+            "name": "Pif",
+            "description": null,
+            "underDescription": null,
+            "productBackStyleCode": null,
+            "actions": [],
+            "properties": [
+                {
+                    "code": "text_1",
+                    "header": null,
+                    "value": "Dadada",
+                    "title": null,
+                    "units": null
+                }
+            ]
+        }
+    ]
+}
