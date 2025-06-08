@@ -153,4 +153,5 @@ export interface GroupWidgetsProps {
   group: Group;
   onSelectNode: (node: any, path: string) => void;
   getGroupWidgets: (group: Group) => ExpandedWidget[];
+  onUnlink?: (type: 'widget', parentCode: string, code: string) => void;
 }

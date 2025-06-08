@@ -39,6 +39,7 @@ const App = () => {
           actualWidgets={logic.actualWidgets}
           actualGroups={logic.actualGroups}
           type={logic.creationDialog.type}
+          actualMarketplaces={logic.structuredData ? logic.structuredData.marketplaces : []}
         />
         {logic.structuredData && (
           <AttachmentDialog
@@ -46,8 +47,14 @@ const App = () => {
             onClose={() => logic.setAttachmentDialog({ ...logic.attachmentDialog, open: false })}
             onSubmit={logic.handleAttachItems}
             data={logic.structuredData}
-            type={logic.attachmentDialog.type === "marketplace" ? "groups" : "widgets"}
-            title={logic.attachmentDialog.type === "marketplace" ? "Привязать группы к маркетплейсу" : "Привязать виджеты к группе"}
+            type={logic.attachmentDialog.type === "marketplace" ? "groups" : logic.attachmentDialog.type === "initial-marketplace" ? "marketplaces" : "widgets"}
+            title={
+              logic.attachmentDialog.type === "marketplace"
+                ? "Привязать группы к маркетплейсу"
+                : logic.attachmentDialog.type === "initial-marketplace"
+                ? "Привязать витрины к маркетплейсу"
+                : "Привязать виджеты к группе"
+            }
           />
         )}
         <Box sx={{ marginBottom: 3 }}>
@@ -106,6 +113,8 @@ const App = () => {
                   onAttachWidgets={logic.openAttachmentDialog.bind(null, "group")}
                   getMarketplaceGroups={logic.getMarketplaceGroups}
                   getGroupWidgets={logic.getGroupWidgets}
+                  onAttachMarketplaces={logic.openInitialMarketplaceDialog}
+                  onUnlink={logic.handleUnlink}
                 />
               </Paper>
             </Grid>

@@ -1,21 +1,7 @@
 import React, { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Box,
-  Typography,
-  Autocomplete,
-  Chip,
-  Tabs,
-  Tab,
-  FormControlLabel,
-  Switch,
-} from "@mui/material";
-import { EntityCreationData, Group, Widget } from "../types";
+import { TextField, Box, Typography, Autocomplete, Chip, Tabs, Tab, FormControlLabel, Switch, Button, MenuItem, Select, InputLabel, FormControl } from "@mui/material";
+import { EntityCreationData } from "../types";
+import BaseDialog from "../common/BaseDialog";
 
 interface CreationDialogProps {
   open: boolean;
@@ -24,6 +10,7 @@ interface CreationDialogProps {
   type: "marketplace" | "group" | "widget" | null;
   actualGroups: string[];
   actualWidgets: string[];
+  actualMarketplaces?: { code: string; isInitial?: boolean }[];
 }
 
 const CreationDialog: React.FC<CreationDialogProps> = ({
@@ -33,19 +20,25 @@ const CreationDialog: React.FC<CreationDialogProps> = ({
   type,
   actualGroups,
   actualWidgets,
+  actualMarketplaces = [],
 }) => {
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [selectedWidgets, setSelectedWidgets] = useState<string[]>([]);
+  const [selectedMarketplaces, setSelectedMarketplaces] = useState<string[]>([]);
   const [jsonInput, setJsonInput] = useState<string>("");
   const [isJsonMode, setIsJsonMode] = useState<boolean>(true);
   const [jsonError, setJsonError] = useState<string | null>(null);
+
+  // Для выбора marketplace с isInitial === false
+  const availableMarketplaces = actualMarketplaces.filter(mp => mp.isInitial === false).map(mp => mp.code);
 
   useEffect(() => {
     if (open) {
       setFormData({});
       setSelectedGroups([]);
       setSelectedWidgets([]);
+      setSelectedMarketplaces([]);
       setJsonInput("");
       setJsonError(null);
     }
@@ -57,11 +50,12 @@ const CreationDialog: React.FC<CreationDialogProps> = ({
         const parsed = JSON.parse(jsonInput);
         setFormData(parsed);
         setJsonError(null);
-
         if (type === "marketplace" && parsed.marketplaceGroups) {
           setSelectedGroups(parsed.marketplaceGroups.map((g: any) => g.group));
         }
-
+        if (type === "marketplace" && parsed.settingMarketplaces) {
+          setSelectedMarketplaces(parsed.settingMarketplaces.map((m: any) => m.marketplace));
+        }
         if (type === "group" && parsed.groupWidgets) {
           setSelectedWidgets(parsed.groupWidgets.map((w: any) => w.widget));
         }
@@ -71,42 +65,31 @@ const CreationDialog: React.FC<CreationDialogProps> = ({
     }
   }, [jsonInput, isJsonMode, type]);
 
-  const handleModeChange = () => {
-    setIsJsonMode(!isJsonMode);
-  };
-
-  const handleJsonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setJsonInput(e.target.value);
-  };
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleModeChange = () => setIsJsonMode(!isJsonMode);
+  const handleJsonChange = (e: React.ChangeEvent<HTMLInputElement>) => setJsonInput(e.target.value);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
-
+  const handleSelectChange = (name: string, value: any) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
   const handleSubmit = () => {
     const entityData: EntityCreationData = {
       type: type!,
       code: formData.code || "",
       ...formData,
     };
-
     if (type === "marketplace") {
-      entityData.marketplaceGroups = selectedGroups.map((group) => ({
-        group,
-        displayOrder: 0,
-      }));
+      if (formData.isInitial === true || formData.isInitial === "true") {
+        entityData.settingMarketplaces = selectedMarketplaces.map((marketplace) => ({ marketplace, displayOrder: 0 }));
+      } else {
+        entityData.marketplaceGroups = selectedGroups.map((group) => ({ group, displayOrder: 0 }));
+      }
     }
-
     if (type === "group") {
-      entityData.groupWidgets = selectedWidgets.map((widget) => ({
-        widget,
-        displayOrder: 0,
-      }));
+      entityData.groupWidgets = selectedWidgets.map((widget) => ({ widget, displayOrder: 0 }));
     }
-
     onSubmit(entityData);
     onClose();
   };
@@ -125,456 +108,133 @@ const CreationDialog: React.FC<CreationDialogProps> = ({
           rows={12}
           error={!!jsonError}
           helperText={jsonError}
-          placeholder={`Введите данные в формате JSON, например:\n${JSON.stringify(
-            {
-              code: "example",
-              title: "Пример",
-              description: "Описание",
-              // другие поля в зависимости от типа
-            },
-            null,
-            2
-          )}`}
+          placeholder={`Введите данные в формате JSON, например:\n${JSON.stringify({ code: "example", title: "Пример", description: "Описание" }, null, 2)}`}
         />
       );
     }
-
     switch (type) {
       case "marketplace":
+        const isInitial = formData.isInitial === true || formData.isInitial === "true";
         return (
           <>
-            <TextField
-              fullWidth
-              label="code"
-              name="code"
-              value={formData.code || ""}
-              onChange={handleChange}
-              margin="normal"
-              required
-              size="small"
-            />
-            <TextField
-              fullWidth
-              label="title"
-              name="title"
-              value={formData.title || ""}
-              onChange={handleChange}
-              margin="normal"
-              size="small"
-            />
-            <TextField
-              fullWidth
-              label="description"
-              name="description"
-              value={formData.description || ""}
-              onChange={handleChange}
-              margin="normal"
-              multiline
-              size="small"
-            />
-
-            <TextField
-              fullWidth
-              label="name"
-              name="name"
-              value={formData.name || null}
-              onChange={handleChange}
-              margin="normal"
-              multiline
-              size="small"
-            />
-
-            <TextField
-              fullWidth
-              label="channel"
-              name="channel"
-              value={formData.channel || null}
-              onChange={handleChange}
-              margin="normal"
-              multiline
-              size="small"
-            />
-            <TextField
-              fullWidth
-              label="headerViewTypeCode"
-              name="headerViewTypeCode"
-              value={formData.headerViewTypeCode || null}
-              onChange={handleChange}
-              margin="normal"
-              multiline
-              size="small"
-            />
-            <TextField
-              fullWidth
-              label="headerBackImage"
-              name="headerBackImage"
-              value={formData.headerBackImage || null}
-              onChange={handleChange}
-              margin="normal"
-              multiline
-              size="small"
-            />
-            <TextField
-              fullWidth
-              label="headerBackStyleCode"
-              name="headerBackStyleCode"
-              value={formData.headerBackStyleCode || null}
-              onChange={handleChange}
-              margin="normal"
-              multiline
-              size="small"
-            />
-            <TextField
-              fullWidth
-              label="sortingParameter"
-              name="sortingParameter"
-              value={formData.sortingParameter || null}
-              onChange={handleChange}
-              margin="normal"
-              multiline
-              size="small"
-            />
-
-            <TextField
-              fullWidth
-              label="filteringParameter"
-              name="filteringParameter"
-              value={formData.filteringParameter || null}
-              onChange={handleChange}
-              margin="normal"
-              multiline
-              size="small"
-            />
-
-            <TextField
-              fullWidth
-              label="isInitial"
-              name="isInitial"
-              value={formData.isInitial || null}
-              onChange={handleChange}
-              margin="normal"
-              multiline
-              size="small"
-            />
-
-            <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>
-              Добавить группы
-            </Typography>
-            <Autocomplete
-              multiple
-              options={actualGroups}
-              value={selectedGroups}
-              onChange={(_, value) => setSelectedGroups(value)}
-              renderInput={(params) => (
-                <TextField {...params} label="Выберите группы" />
-              )}
-              renderTags={(value, getTagProps) =>
-                value.map((option, index) => (
-                  <Chip label={option} {...getTagProps({ index })} />
-                ))
-              }
-            />
+            <TextField fullWidth label="code" name="code" value={formData.code || ""} onChange={handleChange} margin="normal" required size="small" />
+            <TextField fullWidth label="title" name="title" value={formData.title || ""} onChange={handleChange} margin="normal" size="small" />
+            <TextField fullWidth label="description" name="description" value={formData.description || ""} onChange={handleChange} margin="normal" multiline size="small" />
+            <TextField fullWidth label="name" name="name" value={formData.name || ""} onChange={handleChange} margin="normal" size="small" />
+            <TextField fullWidth label="channel" name="channel" value={formData.channel || ""} onChange={handleChange} margin="normal" size="small" />
+            <TextField fullWidth label="headerViewTypeCode" name="headerViewTypeCode" value={formData.headerViewTypeCode || ""} onChange={handleChange} margin="normal" size="small" />
+            <TextField fullWidth label="headerBackImage" name="headerBackImage" value={formData.headerBackImage || ""} onChange={handleChange} margin="normal" size="small" />
+            <TextField fullWidth label="headerBackStyleCode" name="headerBackStyleCode" value={formData.headerBackStyleCode || ""} onChange={handleChange} margin="normal" size="small" />
+            <TextField fullWidth label="sortingParameter" name="sortingParameter" value={formData.sortingParameter || ""} onChange={handleChange} margin="normal" size="small" />
+            <TextField fullWidth label="filteringParameter" name="filteringParameter" value={formData.filteringParameter || ""} onChange={handleChange} margin="normal" size="small" />
+            <FormControl fullWidth margin="normal" size="small">
+              <InputLabel id="isInitial-label">isInitial</InputLabel>
+              <Select
+                labelId="isInitial-label"
+                name="isInitial"
+                value={typeof formData.isInitial === "boolean" ? String(formData.isInitial) : "false"}
+                label="isInitial"
+                onChange={e => handleSelectChange("isInitial", e.target.value === "true")}
+              >
+                <MenuItem value={"true"}>true</MenuItem>
+                <MenuItem value={"false"}>false</MenuItem>
+              </Select>
+            </FormControl>
+            {isInitial ? (
+              <Autocomplete
+                multiple
+                options={availableMarketplaces}
+                value={selectedMarketplaces}
+                onChange={(_, v) => setSelectedMarketplaces(v)}
+                renderInput={(params) => <TextField {...params} label="Витрины (marketplace) для привязки" margin="normal" />}
+              />
+            ) : (
+              <Autocomplete
+                multiple
+                options={actualGroups}
+                value={selectedGroups}
+                onChange={(_, v) => setSelectedGroups(v)}
+                renderInput={(params) => <TextField {...params} label="Группы" margin="normal" />}
+              />
+            )}
           </>
         );
-
       case "group":
         return (
           <>
-            <TextField
-              fullWidth
-              label="code"
-              name="code"
-              value={formData.code || ""}
-              onChange={handleChange}
-              margin="normal"
-              required
-              size="small"
-            />
-            <TextField
-              fullWidth
-              label="title"
-              name="title"
-              value={formData.title || ""}
-              onChange={handleChange}
-              margin="normal"
-              size="small"
-            />
-            <TextField
-              fullWidth
-              label="description"
-              name="description"
-              value={formData.description || ""}
-              onChange={handleChange}
-              margin="normal"
-              multiline
-              size="small"
-            />
-
-            <TextField
-              fullWidth
-              label="name"
-              name="name"
-              value={formData.name || null}
-              onChange={handleChange}
-              margin="normal"
-              multiline
-              size="small"
-            />
-
-            <TextField
-              fullWidth
-              label="channel"
-              name="channel"
-              value={formData.channel || null}
-              onChange={handleChange}
-              margin="normal"
-              multiline
-              size="small"
-            />
-
-            <TextField
-              fullWidth
-              label="bhb120"
-              name="bhb120"
-              value={formData.bhb120 || null}
-              onChange={handleChange}
-              margin="normal"
-              multiline
-              size="small"
-            />
-
-            <TextField
-              fullWidth
-              label="viewTypeCode"
-              name="viewTypeCode"
-              value={formData.viewTypeCode || null}
-              onChange={handleChange}
-              margin="normal"
-              multiline
-              size="small"
-            />
-
-            <TextField
-              fullWidth
-              label="categoryCode"
-              name="categoryCode"
-              value={formData.categoryCode || null}
-              onChange={handleChange}
-              margin="normal"
-              multiline
-              size="small"
-            />
-
-            <TextField
-              fullWidth
-              label="widgetViewTypeCode"
-              name="widgetViewTypeCode"
-              value={formData.widgetViewTypeCode || null}
-              onChange={handleChange}
-              margin="normal"
-              multiline
-              size="small"
-            />
-
-            <TextField
-              fullWidth
-              label="widgetBackStyleCode"
-              name="widgetBackStyleCode"
-              value={formData.widgetBackStyleCode || null}
-              onChange={handleChange}
-              margin="normal"
-              multiline
-              size="small"
-            />
-
-            <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>
-              Добавить виджеты
-            </Typography>
-            <Autocomplete
-              multiple
-              options={actualWidgets}
-              value={selectedWidgets}
-              onChange={(_, value) => setSelectedWidgets(value)}
-              renderInput={(params) => (
-                <TextField {...params} label="Выберите виджеты" />
-              )}
-              renderTags={(value, getTagProps) =>
-                value.map((option, index) => (
-                  <Chip label={option} {...getTagProps({ index })} />
-                ))
-              }
-            />
+            <TextField fullWidth label="code" name="code" value={formData.code || ""} onChange={handleChange} margin="normal" required size="small" />
+            <TextField fullWidth label="title" name="title" value={formData.title || ""} onChange={handleChange} margin="normal" size="small" />
+            <TextField fullWidth label="name" name="name" value={formData.name || ""} onChange={handleChange} margin="normal" size="small" />
+            <TextField fullWidth label="viewTypeCode" name="viewTypeCode" value={formData.viewTypeCode || ""} onChange={handleChange} margin="normal" size="small" />
+            <TextField fullWidth label="channel" name="channel" value={formData.channel || ""} onChange={handleChange} margin="normal" size="small" />
+            <FormControl fullWidth margin="normal" size="small">
+              <InputLabel id="bhb120-label">bhb120</InputLabel>
+              <Select
+                labelId="bhb120-label"
+                name="bhb120"
+                value={typeof formData.bhb120 === "boolean" ? String(formData.bhb120) : "false"}
+                label="bhb120"
+                onChange={e => setFormData(prev => ({ ...prev, bhb120: e.target.value === "true" }))}
+              >
+                <MenuItem value={"true"}>true</MenuItem>
+                <MenuItem value={"false"}>false</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField fullWidth label="categoryCode" name="categoryCode" value={formData.categoryCode || ""} onChange={handleChange} margin="normal" size="small" />
+            <TextField fullWidth label="widgetViewTypeCode" name="widgetViewTypeCode" value={formData.widgetViewTypeCode || ""} onChange={handleChange} margin="normal" size="small" />
+            <TextField fullWidth label="widgetBackStyleCode" name="widgetBackStyleCode" value={formData.widgetBackStyleCode || ""} onChange={handleChange} margin="normal" size="small" />
+            <Autocomplete multiple options={actualWidgets} value={selectedWidgets} onChange={(_, v) => setSelectedWidgets(v)} renderInput={(params) => <TextField {...params} label="Виджеты" margin="normal" />} />
           </>
         );
-
       case "widget":
         return (
           <>
-            <TextField
-              fullWidth
-              label="code"
-              name="code"
-              value={formData.code || ""}
-              onChange={handleChange}
-              margin="normal"
-              required
-              size="small"
-            />
-            <TextField
-              fullWidth
-              label="title"
-              name="title"
-              value={formData.title || ""}
-              onChange={handleChange}
-              margin="normal"
-              size="small"
-            />
-            <TextField
-              fullWidth
-              label="description"
-              name="description"
-              value={formData.description || ""}
-              onChange={handleChange}
-              margin="normal"
-              multiline
-              size="small"
-            />
-
-            <TextField
-              fullWidth
-              label="name"
-              name="name"
-              value={formData.name || null}
-              onChange={handleChange}
-              margin="normal"
-              multiline
-              size="small"
-            />
-
-            <TextField
-              fullWidth
-              label="channel"
-              name="channel"
-              value={formData.channel || null}
-              onChange={handleChange}
-              margin="normal"
-              multiline
-              size="small"
-            />
-
-            <TextField
-              fullWidth
-              label="bhb120"
-              name="bhb120"
-              value={formData.bhb120 || null}
-              onChange={handleChange}
-              margin="normal"
-              multiline
-              size="small"
-            />
-            <TextField
-              fullWidth
-              label="categoryCode"
-              name="categoryCode"
-              value={formData.categoryCode || null}
-              onChange={handleChange}
-              margin="normal"
-              multiline
-              size="small"
-            />
-            <TextField
-              fullWidth
-              label="icon"
-              name="icon"
-              value={formData.icon || null}
-              onChange={handleChange}
-              margin="normal"
-              multiline
-              size="small"
-            />
-            <TextField
-              fullWidth
-              label="underDescription"
-              name="underDescription"
-              value={formData.underDescription || null}
-              onChange={handleChange}
-              margin="normal"
-              multiline
-              size="small"
-            />
-            <TextField
-              fullWidth
-              label="productBackStyleCode"
-              name="productBackStyleCode"
-              value={formData.productBackStyleCode || null}
-              onChange={handleChange}
-              margin="normal"
-              multiline
-              size="small"
-            />
-            <TextField
-              fullWidth
-              label="actions"
-              name="actions"
-              value={formData.actions || null}
-              onChange={handleChange}
-              margin="normal"
-              multiline
-              size="small"
-              rows={3}
-            />
-            <TextField
-              fullWidth
-              label="properties"
-              name="properties"
-              value={formData.properties || null}
-              onChange={handleChange}
-              margin="normal"
-              multiline
-              size="small"
-              rows={3}
-            />
+            <TextField fullWidth label="code" name="code" value={formData.code || ""} onChange={handleChange} margin="normal" required size="small" />
+            <TextField fullWidth label="title" name="title" value={formData.title || ""} onChange={handleChange} margin="normal" size="small" />
+            <TextField fullWidth label="name" name="name" value={formData.name || ""} onChange={handleChange} margin="normal" size="small" />
+            <TextField fullWidth label="description" name="description" value={formData.description || ""} onChange={handleChange} margin="normal" size="small" />
+            <TextField fullWidth label="categoryCode" name="categoryCode" value={formData.categoryCode || ""} onChange={handleChange} margin="normal" size="small" />
+            <TextField fullWidth label="channel" name="channel" value={formData.channel || ""} onChange={handleChange} margin="normal" size="small" />
+            <FormControl fullWidth margin="normal" size="small">
+              <InputLabel id="bhb120-label-widget">bhb120</InputLabel>
+              <Select
+                labelId="bhb120-label-widget"
+                name="bhb120"
+                value={typeof formData.bhb120 === "boolean" ? String(formData.bhb120) : "false"}
+                label="bhb120"
+                onChange={e => setFormData(prev => ({ ...prev, bhb120: e.target.value === "true" }))}
+              >
+                <MenuItem value={"true"}>true</MenuItem>
+                <MenuItem value={"false"}>false</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField fullWidth label="icon" name="icon" value={formData.icon || ""} onChange={handleChange} margin="normal" size="small" />
+            <TextField fullWidth label="underDescription" name="underDescription" value={formData.underDescription || ""} onChange={handleChange} margin="normal" size="small" />
+            <TextField fullWidth label="productBackStyleCode" name="productBackStyleCode" value={formData.productBackStyleCode || ""} onChange={handleChange} margin="normal" size="small" />
+            <TextField fullWidth label="actions" name="actions" value={formData.actions || ""} onChange={handleChange} margin="normal" size="small" />
+            <TextField fullWidth label="properties" name="properties" value={formData.properties || ""} onChange={handleChange} margin="normal" size="small" />
           </>
         );
-
       default:
         return null;
     }
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>
-        {type === "marketplace" && "Создать новый маркетплейс"}
-        {type === "group" && "Создать новую группу"}
-        {type === "widget" && "Создать новый виджет"}
-      </DialogTitle>
-      <DialogContent>
-        <Box sx={{ mb: 2 }}>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={isJsonMode}
-                onChange={handleModeChange}
-                color="primary"
-              />
-            }
-            label={isJsonMode ? "Режим JSON" : "Ручной ввод"}
-          />
-        </Box>
-        <Box sx={{ mt: 1 }}>{renderFormFields()}</Box>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Отмена</Button>
-        <Button
-          onClick={handleSubmit}
-          variant="contained"
-          disabled={!formData.code || !!jsonError}
-        >
-          Создать
-        </Button>
-      </DialogActions>
-    </Dialog>
+    <BaseDialog
+      open={open}
+      title={type ? `Создать ${type}` : "Создать"}
+      onClose={onClose}
+      actions={[
+        <Button key="cancel" onClick={onClose}>Отмена</Button>,
+        <Button key="submit" onClick={handleSubmit} variant="contained">Создать</Button>,
+        <Button key="mode" onClick={handleModeChange} color="secondary">{isJsonMode ? "Форма" : "JSON"}</Button>,
+      ]}
+      maxWidth="sm"
+      fullWidth
+    >
+      {renderFormFields()}
+    </BaseDialog>
   );
 };
 

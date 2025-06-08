@@ -28,7 +28,9 @@ interface JsonTreeViewProps {
   onAttachWidgets: (group: Group) => void;
   getMarketplaceGroups: (mp: Marketplace) => ExpandedGroup[];
   getGroupWidgets: (group: Group) => ExpandedWidget[];
-  getInitialMarketplaceLinks?: (mp: Marketplace) => Marketplace[]; // New prop for initial marketplace links
+  getInitialMarketplaceLinks?: (mp: Marketplace) => Marketplace[];
+  onAttachMarketplaces?: (marketplace: Marketplace) => void;
+  onUnlink?: (type: 'marketplace' | 'group' | 'widget', parentCode: string, code: string) => void;
 }
 
 const JsonTreeView: React.FC<JsonTreeViewProps> = ({
@@ -39,6 +41,8 @@ const JsonTreeView: React.FC<JsonTreeViewProps> = ({
   getMarketplaceGroups,
   getGroupWidgets,
   getInitialMarketplaceLinks,
+  onAttachMarketplaces,
+  onUnlink,
 }) => {
   const [expandedMarketplaces, setExpandedMarketplaces] = useState<
     Record<number, boolean>
@@ -72,6 +76,9 @@ const JsonTreeView: React.FC<JsonTreeViewProps> = ({
               getMarketplaceGroups={getMarketplaceGroups}
               getGroupWidgets={getGroupWidgets}
               getInitialMarketplaceLinks={getInitialMarketplaceLinks}
+              onAttachMarketplaces={onAttachMarketplaces}
+              onUnlink={onUnlink}
+              data={data}
             />
           ))}
         </Box>
@@ -100,6 +107,9 @@ interface RowComponentProps {
   getMarketplaceGroups: (mp: Marketplace) => ExpandedGroup[];
   getGroupWidgets: (group: Group) => ExpandedWidget[];
   getInitialMarketplaceLinks?: (mp: Marketplace) => Marketplace[];
+  onAttachMarketplaces?: (marketplace: Marketplace) => void;
+  onUnlink?: (type: 'marketplace' | 'group' | 'widget', parentCode: string, code: string) => void;
+  data: StructuredData;
 }
 
 const RowComponent: React.FC<RowComponentProps> = React.memo(
@@ -114,6 +124,9 @@ const RowComponent: React.FC<RowComponentProps> = React.memo(
     getMarketplaceGroups,
     getGroupWidgets,
     getInitialMarketplaceLinks,
+    onAttachMarketplaces,
+    onUnlink,
+    data,
   }) => {
     const isInitialMarketplace = mp.isInitial;
     const marketplaceGroups = getMarketplaceGroups(mp);
@@ -149,6 +162,17 @@ const RowComponent: React.FC<RowComponentProps> = React.memo(
                   onClick={(e) => {
                     e.stopPropagation();
                     onAttachGroups(mp);
+                  }}
+                  size="small"
+                >
+                  <AddLinkIcon fontSize="small" />
+                </IconButton>
+              )}
+              {mp.isInitial && onAttachMarketplaces && (
+                <IconButton
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAttachMarketplaces(mp);
                   }}
                   size="small"
                 >
@@ -203,6 +227,27 @@ const RowComponent: React.FC<RowComponentProps> = React.memo(
                               >
                                 <EditIcon fontSize="small" />
                               </IconButton>
+                              <IconButton
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const originalMp = data.marketplaces.find((m) => m.code === linkedMp.code);
+                                  if (originalMp) onAttachGroups(originalMp);
+                                }}
+                                size="small"
+                              >
+                                <AddLinkIcon fontSize="small" />
+                              </IconButton>
+                              {onUnlink && (
+                                <IconButton
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onUnlink('marketplace', mp.code, linkedMp.code);
+                                  }}
+                                  size="small"
+                                >
+                                  <span style={{ fontWeight: 'bold', color: 'red' }}>×</span>
+                                </IconButton>
+                              )}
                             </Box>
                           </AccordionSummary>
                           <AccordionDetails sx={{ pt: 0, bgcolor: "background.default" }}>
@@ -257,6 +302,17 @@ const RowComponent: React.FC<RowComponentProps> = React.memo(
                                         >
                                           <AddLinkIcon fontSize="small" />
                                         </IconButton>
+                                        {onUnlink && (
+                                          <IconButton
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              onUnlink('group', linkedMp.code, group.code);
+                                            }}
+                                            size="small"
+                                          >
+                                            <span style={{ fontWeight: 'bold', color: 'red' }}>×</span>
+                                          </IconButton>
+                                        )}
                                       </Box>
                                     </AccordionSummary>
                                     <AccordionDetails sx={{ pt: 0, bgcolor: "background.default" }}>
@@ -271,6 +327,7 @@ const RowComponent: React.FC<RowComponentProps> = React.memo(
                                         group={group}
                                         onSelectNode={onSelectNode}
                                         getGroupWidgets={getGroupWidgets}
+                                        onUnlink={onUnlink}
                                       />
                                     </AccordionDetails>
                                   </Accordion>
@@ -336,6 +393,17 @@ const RowComponent: React.FC<RowComponentProps> = React.memo(
                               >
                                 <AddLinkIcon fontSize="small" />
                               </IconButton>
+                              {onUnlink && (
+                                <IconButton
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onUnlink('group', mp.code, group.code);
+                                  }}
+                                  size="small"
+                                >
+                                  <span style={{ fontWeight: 'bold', color: 'red' }}>×</span>
+                                </IconButton>
+                              )}
                             </Box>
                           </AccordionSummary>
                           <AccordionDetails sx={{ pt: 0, bgcolor: "background.default" }}>
@@ -350,6 +418,7 @@ const RowComponent: React.FC<RowComponentProps> = React.memo(
                               group={group}
                               onSelectNode={onSelectNode}
                               getGroupWidgets={getGroupWidgets}
+                              onUnlink={onUnlink}
                             />
                           </AccordionDetails>
                         </Accordion>
@@ -422,20 +491,24 @@ const LinkedMarketplaces: React.FC<LinkedMarketplacesProps> = React.memo(
 interface MarketplaceGroupsProps {
   marketplaceGroups: ExpandedGroup[];
   mpIndex: number;
+  parentMarketplaceCode: string;
   onSelectNode: (node: any, path: string) => void;
   onAttachWidgets: (group: Group) => void;
   getGroupWidgets: (group: Group) => ExpandedWidget[];
   getMarketplaceGroups: (mp: Marketplace) => ExpandedGroup[];
+  onUnlink?: (type: 'marketplace' | 'group' | 'widget', parentCode: string, code: string) => void;
 }
 
 const MarketplaceGroups: React.FC<MarketplaceGroupsProps> = React.memo(
   ({
     marketplaceGroups,
     mpIndex,
+    parentMarketplaceCode,
     onSelectNode,
     onAttachWidgets,
     getGroupWidgets,
     getMarketplaceGroups,
+    onUnlink,
   }) => {
     const [expandedGroups, setExpandedGroups] = useState<Record<number, boolean>>(
       {}
@@ -516,10 +589,12 @@ const MarketplaceGroups: React.FC<MarketplaceGroupsProps> = React.memo(
                       <MarketplaceGroups
                         marketplaceGroups={nestedGroups}
                         mpIndex={index}
+                        parentMarketplaceCode={marketplace.code}
                         onSelectNode={onSelectNode}
                         onAttachWidgets={onAttachWidgets}
                         getGroupWidgets={getGroupWidgets}
                         getMarketplaceGroups={getMarketplaceGroups}
+                        onUnlink={onUnlink}
                       />
                     </AccordionDetails>
                   )}
@@ -572,6 +647,17 @@ const MarketplaceGroups: React.FC<MarketplaceGroupsProps> = React.memo(
                       >
                         <AddLinkIcon fontSize="small" />
                       </IconButton>
+                      {onUnlink && (
+                        <IconButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onUnlink('group', parentMarketplaceCode, expandedGroup.code);
+                          }}
+                          size="small"
+                        >
+                          <span style={{ fontWeight: 'bold', color: 'red' }}>×</span>
+                        </IconButton>
+                      )}
                     </Box>
                   </AccordionSummary>
                   {expandedGroups[index] && (
@@ -580,6 +666,7 @@ const MarketplaceGroups: React.FC<MarketplaceGroupsProps> = React.memo(
                         group={expandedGroup}
                         onSelectNode={onSelectNode}
                         getGroupWidgets={getGroupWidgets}
+                        onUnlink={onUnlink}
                       />
                     </AccordionDetails>
                   )}
@@ -597,10 +684,11 @@ interface GroupWidgetsProps {
   group: Group;
   onSelectNode: (node: any, path: string) => void;
   getGroupWidgets: (group: Group) => ExpandedWidget[];
+  onUnlink?: (type: 'widget', parentCode: string, code: string) => void;
 }
 
 const GroupWidgets: React.FC<GroupWidgetsProps> = React.memo(
-  ({ group, onSelectNode, getGroupWidgets }) => {
+  ({ group, onSelectNode, getGroupWidgets, onUnlink }) => {
     const widgets = getGroupWidgets(group);
 
     if (widgets.length === 0) {
@@ -634,9 +722,22 @@ const GroupWidgets: React.FC<GroupWidgetsProps> = React.memo(
             }}
             onClick={() => onSelectNode(widget, `widgets[${index}]`)}
           >
-            <Typography variant="subtitle2">
-              {widget.code || `Widget ${index + 1}`}
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", width: "100%" }}>
+              <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>
+                {widget.code || `Widget ${index + 1}`}
+              </Typography>
+              {onUnlink && (
+                <IconButton
+                  onClick={e => {
+                    e.stopPropagation();
+                    onUnlink('widget', group.code, widget.code);
+                  }}
+                  size="small"
+                >
+                  <span style={{ fontWeight: 'bold', color: 'red' }}>×</span>
+                </IconButton>
+              )}
+            </Box>
             {widget.description && (
               <Typography variant="body2" color="text.secondary">
                 {widget.description}

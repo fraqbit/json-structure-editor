@@ -2,8 +2,13 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { applyFilters, normalizeForComparison, validateStructure } from "../components/utils";
 import { processStructure } from "../components/sortUtils";
 import { ChangeItem, compareStructures } from "../components/compareStructures";
-import { FilterOption, Filters, StructuredData, ValidationError, AttachmentDialogState, EntityCreationData, Group, Marketplace, ExpandedGroup, ExpandedWidget } from "../components/types";
+import { FilterOption, Filters, StructuredData, ValidationError, AttachmentDialogState as OrigAttachmentDialogState, EntityCreationData, Group, Marketplace, ExpandedGroup, ExpandedWidget } from "../components/types";
 import saveAs from "file-saver";
+
+type AttachmentDialogType = 'marketplace' | 'group' | 'initial-marketplace';
+interface AttachmentDialogState extends Omit<OrigAttachmentDialogState, 'type'> {
+  type: AttachmentDialogType;
+}
 
 export const useAppLogic = () => {
   const [jsonData, setJsonData] = useState<StructuredData | null>(null);
@@ -34,16 +39,22 @@ export const useAppLogic = () => {
     availableItems: [],
   });
 
-  const openAttachmentDialog = (type: "marketplace" | "group", target: any) => {
+  const openAttachmentDialog = (type: AttachmentDialogType, target: any) => {
     if (!structuredData) return;
     setAttachmentDialog({
       open: true,
       type,
       target,
       availableItems:
-        type === "marketplace" ? structuredData.groups : structuredData.widgets,
+        type === "marketplace"
+          ? structuredData.groups
+          : type === "initial-marketplace"
+            ? structuredData.marketplaces.filter(mp => !mp.isInitial)
+            : structuredData.widgets,
     });
   };
+
+  const openInitialMarketplaceDialog = (target: any) => openAttachmentDialog("initial-marketplace", target);
 
   const handleAttachItems = (selectedCodes: string[]) => {
     if (!structuredData || !attachmentDialog.target) return;
@@ -71,6 +82,17 @@ export const useAppLogic = () => {
         newData.groups[groupIndex].groupWidgets = [
           ...newWidgets,
           ...existingWidgets,
+        ];
+      } else if (attachmentDialog.type === "initial-marketplace") {
+        const mpIndex = newData.marketplaces.findIndex((mp) => mp.code === target.code);
+        if (mpIndex === -1) return;
+        const existingLinks = newData.marketplaces[mpIndex].settingMarketplaces || [];
+        const newLinks = selectedCodes
+          .filter((code) => !existingLinks.some((m) => m.marketplace === code))
+          .map((code) => ({ marketplace: code, displayOrder: 0 }));
+        newData.marketplaces[mpIndex].settingMarketplaces = [
+          ...newLinks,
+          ...existingLinks,
         ];
       }
       setStructuredData(newData);
@@ -102,6 +124,7 @@ export const useAppLogic = () => {
               filteringParameter: entityData.filteringParameter || null,
               isInitial: entityData.isInitial || false,
               marketplaceGroups: entityData.marketplaceGroups || [],
+              settingMarketplaces: entityData.isInitial ? (entityData.settingMarketplaces || []) : undefined,
             },
           ];
           break;
@@ -390,6 +413,29 @@ export const useAppLogic = () => {
     return applyFilters(structuredData, filters, searchTerm);
   }, [structuredData, filters, searchTerm]);
 
+  const handleUnlink = (type: 'marketplace' | 'group' | 'widget', parentCode: string, code: string) => {
+    if (!structuredData) return;
+    const newData = { ...structuredData };
+    if (type === 'marketplace') {
+      // Удалить marketplace из settingMarketplaces у initial marketplace
+      const mpIndex = newData.marketplaces.findIndex(mp => mp.code === parentCode);
+      if (mpIndex === -1) return;
+      newData.marketplaces[mpIndex].settingMarketplaces = (newData.marketplaces[mpIndex].settingMarketplaces || []).filter(m => m.marketplace !== code);
+    } else if (type === 'group') {
+      // Удалить группу из marketplaceGroups у marketplace
+      const mpIndex = newData.marketplaces.findIndex(mp => mp.code === parentCode);
+      if (mpIndex === -1) return;
+      newData.marketplaces[mpIndex].marketplaceGroups = (newData.marketplaces[mpIndex].marketplaceGroups || []).filter(g => g.group !== code);
+    } else if (type === 'widget') {
+      // Удалить виджет из groupWidgets у группы
+      const groupIndex = newData.groups.findIndex(g => g.code === parentCode);
+      if (groupIndex === -1) return;
+      newData.groups[groupIndex].groupWidgets = (newData.groups[groupIndex].groupWidgets || []).filter(w => w.widget !== code);
+    }
+    setStructuredData(newData);
+    showSnackbar('Связь удалена', 'success');
+  };
+
   return {
     jsonData,
     setJsonData,
@@ -422,6 +468,7 @@ export const useAppLogic = () => {
     attachmentDialog,
     setAttachmentDialog,
     openAttachmentDialog,
+    openInitialMarketplaceDialog,
     handleAttachItems,
     handleCreateEntity,
     actualGroups,
@@ -437,5 +484,6 @@ export const useAppLogic = () => {
     handleFilterChange,
     handleSearchChange,
     filteredData,
+    handleUnlink,
   };
 }; 
