@@ -129,6 +129,7 @@ export const findReferences = (data: StructuredData, code: string) => {
   const references = {
     marketplaces: [] as string[],
     groups: [] as string[],
+    widgets: [] as string[],
   };
 
   if (!data) return references;
@@ -144,6 +145,22 @@ export const findReferences = (data: StructuredData, code: string) => {
   data.groups.forEach((group) => {
     if (group.groupWidgets?.some((gw) => gw.widget === code)) {
       references.groups.push(group.code || "Unknown Group");
+    }
+  });
+
+  // Поиск в виджетах по actions/properties
+  data.widgets.forEach((widget) => {
+    if (Array.isArray(widget.actions)) {
+      for (const action of widget.actions) {
+        if (Array.isArray(action.properties)) {
+          if (action.properties.some(
+            (prop) => prop.code === 'marketplaceId' && prop.value === code
+          )) {
+            references.widgets.push(widget.code);
+            break;
+          }
+        }
+      }
     }
   });
 

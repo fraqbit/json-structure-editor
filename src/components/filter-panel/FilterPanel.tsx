@@ -111,7 +111,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
       >
         <Autocomplete
           options={availableFilters}
-          getOptionLabel={(option) => `${option.type}.${option.field}`}
+          getOptionLabel={(option) => option.field}
           sx={{ width: 300 }}
           size="small"
           value={activeFilter}

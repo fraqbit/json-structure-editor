@@ -52,6 +52,7 @@ const JsonEditor: React.FC<JsonEditorProps> = ({
   const [references, setReferences] = useState({
     marketplaces: [],
     groups: [],
+    widgets: [],
   });
 
   useEffect(() => {
@@ -59,7 +60,7 @@ const JsonEditor: React.FC<JsonEditorProps> = ({
       const refs = findReferences(structuredData, node.code);
       setReferences(refs);
     } else {
-      setReferences({ marketplaces: [], groups: [] });
+      setReferences({ marketplaces: [], groups: [], widgets: [] });
     }
   }, [node, structuredData]);
 
@@ -125,6 +126,13 @@ const JsonEditor: React.FC<JsonEditorProps> = ({
               <Typography variant="body2" color="text.secondary" gutterBottom>
                 <strong>Используется в группах:</strong>{" "}
                 {references.groups.join(", ")}
+              </Typography>
+            )}
+
+            {references.widgets && references.widgets.length > 0 && (
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                <strong>Используется в виджетах:</strong>{' '}
+                {references.widgets.join(', ')}
               </Typography>
             )}
 
