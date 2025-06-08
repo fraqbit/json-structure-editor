@@ -40,6 +40,7 @@ const App = () => {
           actualGroups={logic.actualGroups}
           type={logic.creationDialog.type}
           actualMarketplaces={logic.structuredData ? logic.structuredData.marketplaces : []}
+          initialData={logic.creationDialog.formData}
         />
         {logic.structuredData && (
           <AttachmentDialog
@@ -115,6 +116,7 @@ const App = () => {
                   getGroupWidgets={logic.getGroupWidgets}
                   onAttachMarketplaces={logic.openInitialMarketplaceDialog}
                   onUnlink={logic.handleUnlink}
+                  onCopy={logic.openCopyDialog}
                 />
               </Paper>
             </Grid>

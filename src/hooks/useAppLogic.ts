@@ -31,7 +31,10 @@ export const useAppLogic = () => {
   const [creationDialog, setCreationDialog] = useState<{
     open: boolean;
     type: "marketplace" | "group" | "widget" | null;
-  }>({ open: false, type: null });
+    formData?: Record<string, any>;
+  }>(
+    { open: false, type: null }
+  );
   const [attachmentDialog, setAttachmentDialog] = useState<AttachmentDialogState>({
     open: false,
     type: "group",
@@ -441,6 +444,11 @@ export const useAppLogic = () => {
     showSnackbar(parentCode === '' && type === 'marketplace' ? 'Витрина удалена' : 'Связь удалена', 'success');
   };
 
+  const openCopyDialog = (obj: any, type: 'marketplace' | 'group' | 'widget') => {
+    const copy = { ...obj, code: '' };
+    setCreationDialog({ open: true, type, formData: copy });
+  };
+
   return {
     jsonData,
     setJsonData,
@@ -490,5 +498,6 @@ export const useAppLogic = () => {
     handleSearchChange,
     filteredData,
     handleUnlink,
+    openCopyDialog,
   };
 }; 

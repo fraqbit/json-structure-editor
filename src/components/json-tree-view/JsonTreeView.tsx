@@ -35,6 +35,7 @@ interface JsonTreeViewProps {
   getInitialMarketplaceLinks?: (mp: Marketplace) => Marketplace[];
   onAttachMarketplaces?: (marketplace: Marketplace) => void;
   onUnlink?: (type: 'marketplace' | 'group' | 'widget', parentCode: string, code: string) => void;
+  onCopy?: (obj: any, type: 'marketplace' | 'group' | 'widget') => void;
 }
 
 const JsonTreeView: React.FC<JsonTreeViewProps> = ({
@@ -47,10 +48,13 @@ const JsonTreeView: React.FC<JsonTreeViewProps> = ({
   getInitialMarketplaceLinks,
   onAttachMarketplaces,
   onUnlink,
+  onCopy,
 }) => {
   const [expandedMarketplaces, setExpandedMarketplaces] = useState<
     Record<number, boolean>
   >({});
+  const [copyData, setCopyData] = useState<any | null>(null);
+  const [copyType, setCopyType] = useState<'marketplace' | 'group' | 'widget' | null>(null);
 
   const handleToggleMarketplace = useCallback((index: number) => {
     setExpandedMarketplaces((prev) => ({
@@ -58,6 +62,13 @@ const JsonTreeView: React.FC<JsonTreeViewProps> = ({
       [index]: !prev[index],
     }));
   }, []);
+
+  const handleCopy = (obj: any, type: 'marketplace' | 'group' | 'widget') => {
+    const copy = { ...obj, code: '' };
+    setCopyData(copy);
+    setCopyType(type);
+    // Здесь можно вызвать setCreationDialog/openCreationDialog если он доступен через пропсы или контекст
+  };
 
   return (
     <Box sx={{ p: 2 }}>
@@ -84,6 +95,7 @@ const JsonTreeView: React.FC<JsonTreeViewProps> = ({
               onUnlink={onUnlink}
               data={data}
               parentCode=""
+              onCopy={onCopy}
             />
           ))}
         </Box>

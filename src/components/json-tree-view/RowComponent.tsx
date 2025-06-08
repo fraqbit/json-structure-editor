@@ -11,6 +11,7 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import EditIcon from "@mui/icons-material/Edit";
 import AddLinkIcon from "@mui/icons-material/AddLink";
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { StructuredData, Marketplace, Group, ExpandedGroup, ExpandedWidget } from "../types";
 import AddIcon from "@mui/icons-material/Add";
 import GroupWidgets from "./GroupWidgets";
@@ -30,6 +31,7 @@ interface RowComponentProps {
   onUnlink?: (type: 'marketplace' | 'group' | 'widget', parentCode: string, code: string) => void;
   data: StructuredData;
   parentCode?: string;
+  onCopy?: (obj: any, type: 'marketplace' | 'group' | 'widget') => void;
 }
 
 const RowComponent: React.FC<RowComponentProps> = React.memo(
@@ -48,6 +50,7 @@ const RowComponent: React.FC<RowComponentProps> = React.memo(
     onUnlink,
     data,
     parentCode = '',
+    onCopy,
   }) => {
     const isInitialMarketplace = mp.isInitial;
     const marketplaceGroups = getMarketplaceGroups(mp);
@@ -108,6 +111,15 @@ const RowComponent: React.FC<RowComponentProps> = React.memo(
                 size="small"
               >
                 <span style={{ fontWeight: 'bold', color: 'red' }}>×</span>
+              </IconButton>
+              <IconButton
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onCopy) onCopy(mp, 'marketplace');
+                }}
+                size="small"
+              >
+                <ContentCopyIcon fontSize="small" />
               </IconButton>
             </Box>
           </AccordionSummary>

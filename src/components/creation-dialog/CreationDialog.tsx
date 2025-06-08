@@ -11,6 +11,7 @@ interface CreationDialogProps {
   actualGroups: string[];
   actualWidgets: string[];
   actualMarketplaces?: { code: string; isInitial?: boolean }[];
+  initialData?: Record<string, any>;
 }
 
 const CreationDialog: React.FC<CreationDialogProps> = ({
@@ -21,6 +22,7 @@ const CreationDialog: React.FC<CreationDialogProps> = ({
   actualGroups,
   actualWidgets,
   actualMarketplaces = [],
+  initialData,
 }) => {
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
@@ -35,14 +37,14 @@ const CreationDialog: React.FC<CreationDialogProps> = ({
 
   useEffect(() => {
     if (open) {
-      setFormData({});
+      setFormData(initialData || {});
       setSelectedGroups([]);
       setSelectedWidgets([]);
       setSelectedMarketplaces([]);
-      setJsonInput("");
+      setJsonInput(initialData ? JSON.stringify(initialData, null, 2) : "");
       setJsonError(null);
     }
-  }, [open, type]);
+  }, [open, type, initialData]);
 
   useEffect(() => {
     if (isJsonMode && jsonInput) {
