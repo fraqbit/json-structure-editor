@@ -59,7 +59,7 @@ export interface Marketplace {
   marketplaceGroups?: (MarketplaceGroup | null)[];
   isInitial?: boolean;
   settingMarketplaces?: Array<{
-    marketplace: string;
+    marketplaceCode: string;
     displayOrder: number;
   }>;
   [key: string]: any;
