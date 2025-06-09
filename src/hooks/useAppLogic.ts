@@ -91,8 +91,8 @@ export const useAppLogic = () => {
         if (mpIndex === -1) return;
         const existingLinks = newData.marketplaces[mpIndex].settingMarketplaces || [];
         const newLinks = selectedCodes
-          .filter((code) => !existingLinks.some((m) => m.marketplace === code))
-          .map((code) => ({ marketplace: code, displayOrder: 0 }));
+          .filter((code) => !existingLinks.some((m) => m.marketplaceCode === code))
+          .map((code) => ({ isInitial: false, marketplaceCode: code, personalization: false, displayOrder: 0, settingMarketplaceElements: []}));
         newData.marketplaces[mpIndex].settingMarketplaces = [
           ...newLinks,
           ...existingLinks,
@@ -327,7 +327,7 @@ export const useAppLogic = () => {
     if (mp.isInitial && mp.settingMarketplaces) {
       return mp.settingMarketplaces
         .map((mg) => {
-          const marketplace = structuredData.marketplaces.find((m) => m.code === mg.marketplace);
+          const marketplace = structuredData.marketplaces.find((m) => m.code === mg.marketplaceCode);
           if (!marketplace) return null;
           return {
             ...marketplace,
@@ -427,7 +427,7 @@ export const useAppLogic = () => {
         // Удалить marketplace из settingMarketplaces у initial marketplace
         const mpIndex = newData.marketplaces.findIndex(mp => mp.code === parentCode);
         if (mpIndex === -1) return;
-        newData.marketplaces[mpIndex].settingMarketplaces = (newData.marketplaces[mpIndex].settingMarketplaces || []).filter(m => m.marketplace !== code);
+        newData.marketplaces[mpIndex].settingMarketplaces = (newData.marketplaces[mpIndex].settingMarketplaces || []).filter(m => m.marketplaceCode !== code);
       }
     } else if (type === 'group') {
       // Удалить группу из marketplaceGroups у marketplace
@@ -500,4 +500,4 @@ export const useAppLogic = () => {
     handleUnlink,
     openCopyDialog,
   };
-}; 
+};
