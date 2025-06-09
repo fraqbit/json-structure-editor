@@ -185,7 +185,7 @@ const CreationDialog: React.FC<CreationDialogProps> = ({
     };
     if (type === "marketplace") {
       if (formData.isInitial === true || formData.isInitial === "true") {
-        entityData.settingMarketplaces = selectedMarketplaces.map((marketplace) => ({ marketplace, displayOrder: 0 }));
+        entityData.settingMarketplaces = selectedMarketplaces.map((marketplace) => ({ isInitial: false, marketplaceCode: marketplace, personalization: false, displayOrder: 0, settingMarketplaceElements: [] }));
       } else {
         entityData.marketplaceGroups = selectedGroups.map((group) => ({ group, displayOrder: 0 }));
       }
