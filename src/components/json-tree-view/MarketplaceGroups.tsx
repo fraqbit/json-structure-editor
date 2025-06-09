@@ -78,7 +78,7 @@ const MarketplaceGroups: React.FC<MarketplaceGroupsProps> = React.memo(
                     <Box
                       sx={{ display: "flex", alignItems: "center", width: "100%" }}
                     >
-                      <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>
+                      <Typography variant="subtitle2" sx={{ flexGrow: 1, userSelect: 'text' }}>
                         {marketplace.code || `Marketplace ${index + 1}`}
                       </Typography>
                       <IconButton
@@ -100,7 +100,7 @@ const MarketplaceGroups: React.FC<MarketplaceGroupsProps> = React.memo(
                       <Typography
                         variant="body2"
                         color="text.secondary"
-                        sx={{ mb: 1 }}
+                        sx={{ mb: 1, userSelect: 'text' }}
                       >
                         Группы на витрине
                       </Typography>
@@ -122,7 +122,6 @@ const MarketplaceGroups: React.FC<MarketplaceGroupsProps> = React.memo(
           } else {
             // This is a group, render its widgets
             const expandedGroup = group as ExpandedGroup;
-            const widgets = getGroupWidgets(expandedGroup);
             return (
               <Paper
                 key={expandedGroup.code || index}
@@ -141,7 +140,10 @@ const MarketplaceGroups: React.FC<MarketplaceGroupsProps> = React.memo(
                     <Box
                       sx={{ display: "flex", alignItems: "center", width: "100%" }}
                     >
-                      <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>
+                      <Typography variant="subtitle2" sx={{ flexGrow: 1, WebkitUserSelect: 'text',
+                          MozUserSelect: 'text',
+                          msUserSelect: 'text',
+                          userSelect: 'text !important' }}>
                         {expandedGroup.code || `Group ${index + 1}`}
                       </Typography>
                       <IconButton
@@ -198,4 +200,4 @@ const MarketplaceGroups: React.FC<MarketplaceGroupsProps> = React.memo(
   }
 );
 
-export default MarketplaceGroups; 
+export default MarketplaceGroups;
