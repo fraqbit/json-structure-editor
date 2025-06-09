@@ -10,7 +10,7 @@ import {
 import Ajv from "ajv";
 import schema from "../components/ImportSchema.json";
 import { useMemo } from "react";
-import { processStructure } from "../utils/sortUtils";
+import { processStructure } from "./sortUtils";
 const ajv = new Ajv({ allErrors: true });
 
 export const applyFilters = (
@@ -210,11 +210,11 @@ export const getInitialMarketplaceLinks = (marketplace: Marketplace, allMarketpl
 
   // Get the codes of linked marketplaces from settingMarketplaces
   const linkedMarketplaceCodes = marketplace.settingMarketplaces.map(
-    setting => setting.marketplace
+    setting => setting.marketplaceCode
   );
 
   // Find the actual marketplace objects that match these codes
-  return allMarketplaces.filter(mp => 
+  return allMarketplaces.filter(mp =>
     linkedMarketplaceCodes.includes(mp.code)
   );
 };
