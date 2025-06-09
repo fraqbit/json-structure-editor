@@ -63,12 +63,12 @@ const RowComponent: React.FC<RowComponentProps> = React.memo(
             "&:before": { display: "none" },
             border: "1px solid",
             borderColor: "divider",
-            borderRadius: "4px !important",
+            borderRadius: "4px !important"
           }}
         >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Box sx={{ display: "flex", alignItems: "center", width: "100%" }}>
-              <Typography fontWeight="medium" sx={{ flexGrow: 1 }}>
+              <Typography fontWeight="medium" sx={{ flexGrow: 1, userSelect: 'text'}}>
                 { mp.code || `Marketplace ${index + 1}`}
               </Typography>
               <IconButton
@@ -396,4 +396,4 @@ const RowComponent: React.FC<RowComponentProps> = React.memo(
   }
 );
 
-export default RowComponent; 
+export default RowComponent;
